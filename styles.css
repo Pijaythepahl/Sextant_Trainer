@@ -122,8 +122,8 @@ h2 {
 
 .sky-frame {
   position: relative;
-  height: min(42vh, 360px);
-  min-height: 300px;
+  height: min(62vh, 560px);
+  min-height: 460px;
   --world-horizon-y: 86%;
   overflow: hidden;
   border-block: 1px solid var(--line);
@@ -231,7 +231,7 @@ h2 {
   position: absolute;
   left: 50%;
   top: 50%;
-  width: clamp(160px, 42vw, 220px);
+  width: clamp(158px, 38vw, 220px);
   aspect-ratio: 1;
   --scope-horizon-y: 50%;
   transform: translate(-50%, -50%);
@@ -417,9 +417,13 @@ select {
 
 .coordinate-grid {
   display: grid;
-  grid-template-columns: 0.9fr 1fr 0.72fr 0.9fr 1fr 0.72fr 1.5fr;
+  grid-template-columns: minmax(68px, 0.8fr) minmax(86px, 1fr) minmax(62px, 0.7fr) minmax(68px, 0.8fr) minmax(86px, 1fr) minmax(62px, 0.7fr);
   gap: 10px;
   margin-top: 12px;
+}
+
+.coordinate-grid label:last-child {
+  grid-column: 1 / -1;
 }
 
 .coordinate-grid label,
@@ -513,7 +517,7 @@ select {
 
 @media (max-width: 520px) {
   .coordinate-grid {
-    grid-template-columns: 1fr 1fr 0.72fr;
+    grid-template-columns: minmax(72px, 1fr) minmax(92px, 1fr) minmax(64px, 0.8fr);
   }
 
   .almanac-result {
