@@ -14,10 +14,10 @@ Eine mobile WebApp, die einen Sextanten als Messinstrument simuliert. Die App be
 
 ## MVP 2
 
-- Latitude und Longitude manuell eingeben
+- Latitude und Longitude manuell in Grad und Dezimalminuten eingeben
 - UTC-Zeit setzen oder auf den aktuellen Zeitpunkt springen
 - vereinfachten Almanach fuer Sonne, Mond, sichtbare Planeten und Navigationssterne berechnen
-- Gestirn aus einer Liste auswaehlen
+- Gestirn aus einer Liste auswaehlen, fuer Sonne und Mond mit Oberrand und Unterrand
 - Blick grob auf das gewaehlte Gestirn ausrichten
 - Messprotokoll mit Ort, Zeit, Zielhoehe und Zielazimut speichern
 

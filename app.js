@@ -12,6 +12,10 @@ const SCOPE_VIEW = {
   topY: 8,
   bottomY: 86,
 };
+const LIMB_OFFSETS = {
+  sun: 16 / 60,
+  moon: 15 / 60,
+};
 
 const state = {
   targetAzimuth: 126,
@@ -107,8 +111,12 @@ const elements = {
   indexAngle: document.querySelector("#indexAngle"),
   indexError: document.querySelector("#indexError"),
   objectName: document.querySelector("#objectName"),
-  latitude: document.querySelector("#latitude"),
-  longitude: document.querySelector("#longitude"),
+  latitudeDeg: document.querySelector("#latitudeDeg"),
+  latitudeMin: document.querySelector("#latitudeMin"),
+  latitudeHemisphere: document.querySelector("#latitudeHemisphere"),
+  longitudeDeg: document.querySelector("#longitudeDeg"),
+  longitudeMin: document.querySelector("#longitudeMin"),
+  longitudeHemisphere: document.querySelector("#longitudeHemisphere"),
   utcTime: document.querySelector("#utcTime"),
   bodySelect: document.querySelector("#bodySelect"),
   useCurrentTime: document.querySelector("#useCurrentTime"),
@@ -185,6 +193,25 @@ function toDateTimeLocalValue(date) {
 
 function getAlmanacDate() {
   return new Date(`${elements.utcTime.value}:00Z`);
+}
+
+function getSignedCoordinate(degreesElement, minutesElement, hemisphereElement, negativeHemisphere, maxDegrees) {
+  const degrees = clamp(Math.abs(Number(degreesElement.value || 0)), 0, maxDegrees);
+  const minutes = clamp(Math.abs(Number(minutesElement.value || 0)), 0, 59.999);
+  const sign = hemisphereElement.value === negativeHemisphere ? -1 : 1;
+
+  return sign * (degrees + minutes / 60);
+}
+
+function getObserverPosition() {
+  return {
+    latitude: getSignedCoordinate(elements.latitudeDeg, elements.latitudeMin, elements.latitudeHemisphere, "S", 90),
+    longitude: getSignedCoordinate(elements.longitudeDeg, elements.longitudeMin, elements.longitudeHemisphere, "W", 180),
+  };
+}
+
+function formatCoordinate(degrees, minutes, hemisphere) {
+  return `${Math.round(degrees)} deg ${Number(minutes).toFixed(3)}' ${hemisphere}`;
 }
 
 function getJulianDate(date) {
@@ -322,7 +349,7 @@ function getPlanetEquatorial(name, jd) {
   return eclipticToEquatorial(lambda, beta > 180 ? beta - 360 : beta, jd);
 }
 
-function makeBody(id, name, kind, equatorial, latitude, longitude, jd) {
+function makeBody(id, name, kind, equatorial, latitude, longitude, jd, limbOffset = 0) {
   const horizontal = equatorialToHorizontal(equatorial.ra, equatorial.dec, latitude, longitude, jd);
 
   return {
@@ -332,18 +359,22 @@ function makeBody(id, name, kind, equatorial, latitude, longitude, jd) {
     ra: equatorial.ra,
     dec: equatorial.dec,
     azimuth: horizontal.azimuth,
-    altitude: horizontal.altitude,
+    altitude: horizontal.altitude + limbOffset,
+    centerAltitude: horizontal.altitude,
   };
 }
 
 function calculateBodies() {
-  const latitude = clamp(Number(elements.latitude.value || 0), -90, 90);
-  const longitude = clamp(Number(elements.longitude.value || 0), -180, 180);
+  const { latitude, longitude } = getObserverPosition();
   const date = getAlmanacDate();
   const jd = getJulianDate(date);
+  const sunEquatorial = getSunEquatorial(jd);
+  const moonEquatorial = getMoonEquatorial(jd);
   const bodies = [
-    makeBody("sun", "Sonne", "sun", getSunEquatorial(jd), latitude, longitude, jd),
-    makeBody("moon", "Mond", "moon", getMoonEquatorial(jd), latitude, longitude, jd),
+    makeBody("sun-lower", "Sonne Unterrand", "sun", sunEquatorial, latitude, longitude, jd, -LIMB_OFFSETS.sun),
+    makeBody("sun-upper", "Sonne Oberrand", "sun", sunEquatorial, latitude, longitude, jd, LIMB_OFFSETS.sun),
+    makeBody("moon-lower", "Mond Unterrand", "moon", moonEquatorial, latitude, longitude, jd, -LIMB_OFFSETS.moon),
+    makeBody("moon-upper", "Mond Oberrand", "moon", moonEquatorial, latitude, longitude, jd, LIMB_OFFSETS.moon),
   ];
 
   Object.keys(PLANET_ELEMENTS).forEach((name) => {
@@ -395,7 +426,7 @@ function renderBodyOptions(previousValue) {
   if (previousValue && state.bodies.some((body) => body.id === previousValue)) {
     elements.bodySelect.value = previousValue;
   } else {
-    elements.bodySelect.value = state.bodies.find((body) => body.id === "sun")?.id || state.bodies[0]?.id || "";
+    elements.bodySelect.value = state.bodies.find((body) => body.id === "sun-lower")?.id || state.bodies[0]?.id || "";
   }
 }
 
@@ -553,7 +584,7 @@ function saveMeasurement() {
     raw: formatAngle(state.indexAngle),
     corrected: formatAngle(corrected),
     indexError,
-    location: `${Number(elements.latitude.value).toFixed(4)}, ${Number(elements.longitude.value).toFixed(4)}`,
+    location: `${formatCoordinate(elements.latitudeDeg.value, elements.latitudeMin.value, elements.latitudeHemisphere.value)} / ${formatCoordinate(elements.longitudeDeg.value, elements.longitudeMin.value, elements.longitudeHemisphere.value)}`,
     target: `Az ${Math.round(state.targetAzimuth)} deg / Alt ${formatAngle(state.targetAltitude)}`,
   });
 
@@ -595,8 +626,12 @@ function aimAtSelectedBody() {
 });
 
 ["change", "input"].forEach((eventName) => {
-  elements.latitude.addEventListener(eventName, refreshAlmanac);
-  elements.longitude.addEventListener(eventName, refreshAlmanac);
+  elements.latitudeDeg.addEventListener(eventName, refreshAlmanac);
+  elements.latitudeMin.addEventListener(eventName, refreshAlmanac);
+  elements.latitudeHemisphere.addEventListener(eventName, refreshAlmanac);
+  elements.longitudeDeg.addEventListener(eventName, refreshAlmanac);
+  elements.longitudeMin.addEventListener(eventName, refreshAlmanac);
+  elements.longitudeHemisphere.addEventListener(eventName, refreshAlmanac);
   elements.utcTime.addEventListener(eventName, refreshAlmanac);
 });
 

@@ -52,50 +52,6 @@
         </div>
       </section>
 
-      <section class="almanac" aria-label="Almanach">
-        <div class="section-title">
-          <div>
-            <p class="eyebrow">Almanach</p>
-            <h2>Beobachterdaten</h2>
-          </div>
-          <button id="useCurrentTime" type="button">Jetzt</button>
-        </div>
-
-        <div class="three-column">
-          <label>
-            Lat
-            <input id="latitude" type="number" step="0.0001" value="53.5511">
-          </label>
-          <label>
-            Lon
-            <input id="longitude" type="number" step="0.0001" value="9.9937">
-          </label>
-          <label>
-            UTC
-            <input id="utcTime" type="datetime-local">
-          </label>
-        </div>
-
-        <div class="two-column almanac-actions">
-          <label>
-            Gestirn
-            <select id="bodySelect"></select>
-          </label>
-          <button id="aimSelectedBody" type="button">Blick ausrichten</button>
-        </div>
-
-        <div class="result-panel almanac-result">
-          <div>
-            <span>Berechnet</span>
-            <strong id="selectedBodyReadout">Az 000 deg / Alt 00 deg</strong>
-          </div>
-          <div>
-            <span>Quelle</span>
-            <strong id="almanacNote">vereinfachter Almanach</strong>
-          </div>
-        </div>
-      </section>
-
       <section class="controls" aria-label="Bedienung">
         <div class="control-group">
           <label for="azimuth">Blick horizontal</label>
@@ -132,6 +88,72 @@
             <strong id="correctedReading">00 deg 00.0'</strong>
           </div>
           <button id="saveMeasurement" type="button">Messung speichern</button>
+        </div>
+      </section>
+
+      <section class="almanac" aria-label="Almanach">
+        <div class="section-title">
+          <div>
+            <p class="eyebrow">Almanach</p>
+            <h2>Beobachterdaten</h2>
+          </div>
+          <button id="useCurrentTime" type="button">Jetzt</button>
+        </div>
+
+        <div class="coordinate-grid">
+          <label>
+            Lat deg
+            <input id="latitudeDeg" type="number" min="0" max="90" step="1" value="53">
+          </label>
+          <label>
+            Lat min
+            <input id="latitudeMin" type="number" min="0" max="59.999" step="0.001" value="33.066">
+          </label>
+          <label>
+            N/S
+            <select id="latitudeHemisphere">
+              <option value="N">N</option>
+              <option value="S">S</option>
+            </select>
+          </label>
+          <label>
+            Lon deg
+            <input id="longitudeDeg" type="number" min="0" max="180" step="1" value="9">
+          </label>
+          <label>
+            Lon min
+            <input id="longitudeMin" type="number" min="0" max="59.999" step="0.001" value="59.622">
+          </label>
+          <label>
+            E/W
+            <select id="longitudeHemisphere">
+              <option value="E">E</option>
+              <option value="W">W</option>
+            </select>
+          </label>
+          <label>
+            UTC
+            <input id="utcTime" type="datetime-local">
+          </label>
+        </div>
+
+        <div class="two-column almanac-actions">
+          <label>
+            Gestirn
+            <select id="bodySelect"></select>
+          </label>
+          <button id="aimSelectedBody" type="button">Blick ausrichten</button>
+        </div>
+
+        <div class="result-panel almanac-result">
+          <div>
+            <span>Berechnet</span>
+            <strong id="selectedBodyReadout">Az 000 deg / Alt 00 deg</strong>
+          </div>
+          <div>
+            <span>Quelle</span>
+            <strong id="almanacNote">vereinfachter Almanach</strong>
+          </div>
         </div>
       </section>
 
