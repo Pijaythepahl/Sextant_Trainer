@@ -302,25 +302,37 @@ h2 {
 }
 
 .scope-sun {
-  width: 46px;
-  margin: -23px 0 0 -23px;
+  width: 4px;
+  margin: -2px 0 0 -2px;
   z-index: 3;
 }
 
 .scope-sun.is-sun,
 .scope-sun.is-moon {
-  width: 46px;
-  margin: -23px 0 0 -23px;
+  width: 4px;
+  margin: -2px 0 0 -2px;
 }
 
 .scope-sun.is-planet {
-  width: 18px;
-  margin: -9px 0 0 -9px;
+  width: 3px;
+  margin: -1.5px 0 0 -1.5px;
 }
 
 .scope-sun.is-star {
-  width: 8px;
-  margin: -4px 0 0 -4px;
+  width: 3px;
+  margin: -1.5px 0 0 -1.5px;
+}
+
+.scope-sun.is-sun {
+  box-shadow:
+    0 0 5px rgba(245, 200, 75, 0.95),
+    0 0 18px rgba(245, 200, 75, 0.48);
+}
+
+.scope-sun.is-moon {
+  box-shadow:
+    0 0 5px rgba(216, 210, 191, 0.9),
+    0 0 15px rgba(216, 210, 191, 0.42);
 }
 
 .direct-sun {
