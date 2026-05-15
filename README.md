@@ -6,7 +6,7 @@ Eine mobile WebApp, die einen Sextanten als Messinstrument simuliert. Die App be
 
 - Blickrichtung horizontal und vertikal manuell steuern
 - simulierte Sonne im Himmel suchen
-- reflektiertes Sonnenbild mit dem Indexarm auf den Horizont bringen
+- reflektiertes Sonnenbild mit Indexarm und Schnecke auf den Horizont bringen
 - Sextantenablesung als `Hs` anzeigen
 - Indexfehler in Minuten einstellen
 - korrigierte Ablesung anzeigen

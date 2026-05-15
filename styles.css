@@ -302,25 +302,25 @@ h2 {
 }
 
 .scope-sun {
-  width: 6px;
-  margin: -3px 0 0 -3px;
+  width: 46px;
+  margin: -23px 0 0 -23px;
   z-index: 3;
 }
 
 .scope-sun.is-sun,
 .scope-sun.is-moon {
-  width: 5px;
-  margin: -2.5px 0 0 -2.5px;
+  width: 46px;
+  margin: -23px 0 0 -23px;
 }
 
 .scope-sun.is-planet {
-  width: 4px;
-  margin: -2px 0 0 -2px;
+  width: 18px;
+  margin: -9px 0 0 -9px;
 }
 
 .scope-sun.is-star {
-  width: 3px;
-  margin: -1.5px 0 0 -1.5px;
+  width: 8px;
+  margin: -4px 0 0 -4px;
 }
 
 .direct-sun {
@@ -410,6 +410,27 @@ h2 {
   border: 1px solid rgba(116, 199, 211, 0.28);
   border-radius: 8px;
   background: #132529;
+}
+
+.fine-control {
+  padding: 12px;
+  border: 1px solid rgba(245, 200, 75, 0.24);
+  border-radius: 8px;
+  background: #1e261d;
+}
+
+.range-with-readout {
+  display: grid;
+  grid-template-columns: 1fr 64px;
+  align-items: center;
+  gap: 10px;
+}
+
+.range-with-readout strong {
+  color: var(--text);
+  font-size: 0.86rem;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
 }
 
 input[type="range"] {

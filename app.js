@@ -26,6 +26,7 @@ const state = {
   viewAzimuth: 92,
   viewAltitude: 18,
   indexAngle: 12,
+  micrometerMinutes: 0,
   indexErrorMinutes: 0,
   measurements: [],
   bodies: [],
@@ -109,6 +110,8 @@ const elements = {
   azimuth: document.querySelector("#azimuth"),
   altitude: document.querySelector("#altitude"),
   indexAngle: document.querySelector("#indexAngle"),
+  micrometerMinutes: document.querySelector("#micrometerMinutes"),
+  micrometerReadout: document.querySelector("#micrometerReadout"),
   indexError: document.querySelector("#indexError"),
   objectName: document.querySelector("#objectName"),
   latitudeDeg: document.querySelector("#latitudeDeg"),
@@ -167,6 +170,14 @@ function formatAngle(angle) {
   const degrees = Math.floor(absolute);
   const minutes = (absolute - degrees) * 60;
   return `${sign}${String(degrees).padStart(2, "0")} deg ${minutes.toFixed(1).padStart(4, "0")}'`;
+}
+
+function getSextantAngle() {
+  return state.indexAngle + state.micrometerMinutes / 60;
+}
+
+function formatSignedMinutes(minutes) {
+  return `${minutes >= 0 ? "+" : ""}${minutes.toFixed(1)}'`;
 }
 
 function formatShortAngle(angle) {
@@ -527,12 +538,13 @@ function renderWorldObjects() {
 
 function render() {
   const selectedBody = getSelectedBody();
+  const sextantAngle = getSextantAngle();
   const directPosition = getScopePosition(state.targetAzimuth, state.targetAltitude);
-  const reflectedAltitude = state.targetAltitude - state.indexAngle;
+  const reflectedAltitude = state.targetAltitude - sextantAngle;
   const mirrorPosition = getScopePosition(state.targetAzimuth, reflectedAltitude);
   const scopeHorizonPosition = getScopePosition(state.viewAzimuth, 0);
   const worldHorizonPosition = getWorldPosition(state.viewAzimuth, 0);
-  const correctedAngle = state.indexAngle + state.indexErrorMinutes / 60;
+  const correctedAngle = sextantAngle + state.indexErrorMinutes / 60;
 
   elements.directSun.className = `sun scope-sun direct-sun is-${state.targetKind}`;
   elements.mirrorSun.className = `sun scope-sun mirror-sun is-${state.targetKind}`;
@@ -548,8 +560,9 @@ function render() {
   renderBelowHorizon(elements.directBelowHorizon, scopeHorizonPosition);
   renderBelowHorizon(elements.mirrorBelowHorizon, scopeHorizonPosition);
 
-  elements.sextantReading.textContent = formatAngle(state.indexAngle);
+  elements.sextantReading.textContent = formatAngle(sextantAngle);
   elements.correctedReading.textContent = formatAngle(correctedAngle);
+  elements.micrometerReadout.textContent = formatSignedMinutes(state.micrometerMinutes);
   elements.viewReadout.textContent = `Az ${String(Math.round(state.viewAzimuth)).padStart(3, "0")} deg / Alt ${Math.round(state.viewAltitude)} deg`;
   elements.targetLabel.textContent = state.targetName;
   elements.targetReadout.textContent = `Az ${Math.round(state.targetAzimuth)} deg / Alt ${Math.round(state.targetAltitude)} deg`;
@@ -574,14 +587,15 @@ function renderMeasurements() {
 }
 
 function saveMeasurement() {
-  const corrected = state.indexAngle + state.indexErrorMinutes / 60;
+  const sextantAngle = getSextantAngle();
+  const corrected = sextantAngle + state.indexErrorMinutes / 60;
   const indexError = `${state.indexErrorMinutes >= 0 ? "+" : ""}${state.indexErrorMinutes.toFixed(1)}'`;
   const date = getAlmanacDate();
 
   state.measurements.unshift({
     object: elements.objectName.value.trim() || "Objekt",
     time: date.toISOString().replace("T", " ").slice(0, 19),
-    raw: formatAngle(state.indexAngle),
+    raw: formatAngle(sextantAngle),
     corrected: formatAngle(corrected),
     indexError,
     location: `${formatCoordinate(elements.latitudeDeg.value, elements.latitudeMin.value, elements.latitudeHemisphere.value)} / ${formatCoordinate(elements.longitudeDeg.value, elements.longitudeMin.value, elements.longitudeHemisphere.value)}`,
@@ -595,6 +609,7 @@ function updateFromInputs() {
   state.viewAzimuth = Number(elements.azimuth.value);
   state.viewAltitude = Number(elements.altitude.value);
   state.indexAngle = Number(elements.indexAngle.value);
+  state.micrometerMinutes = Number(elements.micrometerMinutes.value);
   state.indexErrorMinutes = Number(elements.indexError.value || 0);
   render();
 }
@@ -622,6 +637,7 @@ function aimAtSelectedBody() {
   elements.azimuth.addEventListener(eventName, updateFromInputs);
   elements.altitude.addEventListener(eventName, updateFromInputs);
   elements.indexAngle.addEventListener(eventName, updateFromInputs);
+  elements.micrometerMinutes.addEventListener(eventName, updateFromInputs);
   elements.indexError.addEventListener(eventName, updateFromInputs);
 });
 
