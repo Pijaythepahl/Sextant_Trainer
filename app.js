@@ -1,5 +1,17 @@
 const RAD = Math.PI / 180;
 const DEG = 180 / Math.PI;
+const ALTITUDE_VIEW = {
+  topAltitude: 90,
+  bottomAltitude: 0,
+  topY: 8,
+  bottomY: 86,
+};
+const SCOPE_VIEW = {
+  topOffset: 34,
+  bottomOffset: -12,
+  topY: 8,
+  bottomY: 86,
+};
 
 const state = {
   targetAzimuth: 126,
@@ -151,6 +163,11 @@ function formatAngle(angle) {
 
 function formatShortAngle(angle) {
   return `${Math.round(normalizeDegrees(angle))} deg`;
+}
+
+function projectAltitudeToY(altitude, topAltitude, bottomAltitude, topY, bottomY) {
+  const ratio = (topAltitude - altitude) / (topAltitude - bottomAltitude);
+  return topY + ratio * (bottomY - topY);
 }
 
 function toDateTimeLocalValue(date) {
@@ -403,6 +420,32 @@ function getPosition(azimuth, altitude, centerAltitude, horizontalFov, verticalF
   };
 }
 
+function getWorldPosition(azimuth, altitude) {
+  const azDelta = shortestAngleDelta(state.viewAzimuth, azimuth);
+  const x = 50 + (azDelta / 150) * 100;
+  const y = projectAltitudeToY(altitude, ALTITUDE_VIEW.topAltitude, ALTITUDE_VIEW.bottomAltitude, ALTITUDE_VIEW.topY, ALTITUDE_VIEW.bottomY);
+
+  return {
+    x: clamp(x, -12, 112),
+    y: clamp(y, -12, 112),
+    visible: Math.abs(azDelta) <= 93 && altitude >= -8 && altitude <= 96,
+  };
+}
+
+function getScopePosition(azimuth, altitude) {
+  const azDelta = shortestAngleDelta(state.viewAzimuth, azimuth);
+  const topAltitude = state.viewAltitude + SCOPE_VIEW.topOffset;
+  const bottomAltitude = state.viewAltitude + SCOPE_VIEW.bottomOffset;
+  const x = 50 + (azDelta / 32) * 100;
+  const y = projectAltitudeToY(altitude, topAltitude, bottomAltitude, SCOPE_VIEW.topY, SCOPE_VIEW.bottomY);
+
+  return {
+    x: clamp(x, -12, 112),
+    y: clamp(y, -12, 112),
+    visible: Math.abs(azDelta) <= 20 && altitude >= bottomAltitude - 4 && altitude <= topAltitude + 4,
+  };
+}
+
 function renderObject(element, position) {
   element.style.left = `${position.x}%`;
   element.style.top = `${position.y}%`;
@@ -436,7 +479,7 @@ function renderWorldObjects() {
   elements.worldObjects.innerHTML = "";
 
   state.bodies.forEach((body) => {
-    const position = getPosition(body.azimuth, body.altitude, 0, 150, 90);
+    const position = getWorldPosition(body.azimuth, body.altitude);
     const marker = document.createElement("div");
     marker.className = `sky-object is-${body.kind}${body.name === state.targetName ? " is-selected" : ""}`;
     marker.style.left = `${position.x}%`;
@@ -449,11 +492,11 @@ function renderWorldObjects() {
 
 function render() {
   const selectedBody = getSelectedBody();
-  const directPosition = getPosition(state.targetAzimuth, state.targetAltitude, state.viewAltitude, 32, 24);
+  const directPosition = getScopePosition(state.targetAzimuth, state.targetAltitude);
   const reflectedAltitude = state.targetAltitude - state.indexAngle;
-  const mirrorPosition = getPosition(state.targetAzimuth, reflectedAltitude, state.viewAltitude, 32, 24);
-  const scopeHorizonPosition = getPosition(state.viewAzimuth, 0, state.viewAltitude, 32, 24);
-  const worldHorizonPosition = getPosition(state.viewAzimuth, 0, 0, 150, 90);
+  const mirrorPosition = getScopePosition(state.targetAzimuth, reflectedAltitude);
+  const scopeHorizonPosition = getScopePosition(state.viewAzimuth, 0);
+  const worldHorizonPosition = getWorldPosition(state.viewAzimuth, 0);
   const correctedAngle = state.indexAngle + state.indexErrorMinutes / 60;
 
   elements.directSun.className = `sun scope-sun direct-sun is-${state.targetKind}`;
