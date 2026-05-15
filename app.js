@@ -7,8 +7,8 @@ const ALTITUDE_VIEW = {
   bottomY: 86,
 };
 const SCOPE_VIEW = {
-  topOffset: 34,
-  bottomOffset: -12,
+  topOffset: 1,
+  bottomOffset: -1,
   topY: 8,
   bottomY: 86,
 };
