@@ -20,6 +20,7 @@ const LIMB_OFFSETS = {
 const state = {
   targetAzimuth: 126,
   targetAltitude: 38,
+  targetCenterAltitude: 38,
   targetName: "Sonne",
   targetKind: "sun",
   targetComputedAt: "",
@@ -372,6 +373,7 @@ function makeBody(id, name, kind, equatorial, latitude, longitude, jd, limbOffse
     azimuth: horizontal.azimuth,
     altitude: horizontal.altitude + limbOffset,
     centerAltitude: horizontal.altitude,
+    limbOffset,
   };
 }
 
@@ -419,6 +421,7 @@ function syncTargetFromSelectedBody() {
 
   state.targetAzimuth = body.azimuth;
   state.targetAltitude = body.altitude;
+  state.targetCenterAltitude = body.centerAltitude;
   state.targetName = body.name;
   state.targetKind = body.kind;
   elements.objectName.value = body.name;
@@ -539,8 +542,8 @@ function renderWorldObjects() {
 function render() {
   const selectedBody = getSelectedBody();
   const sextantAngle = getSextantAngle();
-  const directPosition = getScopePosition(state.targetAzimuth, state.targetAltitude);
-  const reflectedAltitude = state.targetAltitude - sextantAngle;
+  const directPosition = getScopePosition(state.targetAzimuth, state.targetCenterAltitude);
+  const reflectedAltitude = state.targetCenterAltitude - sextantAngle;
   const mirrorPosition = getScopePosition(state.targetAzimuth, reflectedAltitude);
   const scopeHorizonPosition = getScopePosition(state.viewAzimuth, 0);
   const worldHorizonPosition = getWorldPosition(state.viewAzimuth, 0);
@@ -629,7 +632,7 @@ function setViewFromPointer(event) {
 function aimAtSelectedBody() {
   syncTargetFromSelectedBody();
   elements.azimuth.value = Math.round(state.targetAzimuth);
-  elements.altitude.value = Math.round(clamp(state.targetAltitude, -10, 80));
+  elements.altitude.value = Math.round(clamp(state.targetCenterAltitude, -10, 80) * 2) / 2;
   updateFromInputs();
 }
 
