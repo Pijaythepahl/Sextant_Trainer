@@ -11,7 +11,7 @@
       <section class="instrument" aria-label="Sextanten-Simulator">
         <header class="topbar">
           <div>
-            <p class="eyebrow">MVP 1</p>
+            <p class="eyebrow">MVP 2</p>
             <h1>Handsextant</h1>
           </div>
           <div class="readout">
@@ -23,7 +23,7 @@
         <div class="sky-frame" id="skyFrame">
           <div class="azimuth-scale" id="azimuthScale"></div>
           <div class="world-horizon" id="worldHorizon"></div>
-          <div class="sun world-sun" id="worldSun" aria-hidden="true"></div>
+          <div class="sky-objects" id="worldObjects" aria-hidden="true"></div>
           <div class="scope" aria-label="Blick durch den Sextanten">
             <div class="scope-pane scope-direct">
               <div class="scope-below-horizon" id="directBelowHorizon"></div>
@@ -46,8 +46,52 @@
             <strong id="viewReadout">Az 000 deg / Alt 00 deg</strong>
           </div>
           <div>
-            <span>Sonne</span>
+            <span id="targetLabel">Sonne</span>
             <strong id="targetReadout">Az 126 deg / Alt 38 deg</strong>
+          </div>
+        </div>
+      </section>
+
+      <section class="almanac" aria-label="Almanach">
+        <div class="section-title">
+          <div>
+            <p class="eyebrow">Almanach</p>
+            <h2>Beobachterdaten</h2>
+          </div>
+          <button id="useCurrentTime" type="button">Jetzt</button>
+        </div>
+
+        <div class="three-column">
+          <label>
+            Lat
+            <input id="latitude" type="number" step="0.0001" value="53.5511">
+          </label>
+          <label>
+            Lon
+            <input id="longitude" type="number" step="0.0001" value="9.9937">
+          </label>
+          <label>
+            UTC
+            <input id="utcTime" type="datetime-local">
+          </label>
+        </div>
+
+        <div class="two-column almanac-actions">
+          <label>
+            Gestirn
+            <select id="bodySelect"></select>
+          </label>
+          <button id="aimSelectedBody" type="button">Blick ausrichten</button>
+        </div>
+
+        <div class="result-panel almanac-result">
+          <div>
+            <span>Berechnet</span>
+            <strong id="selectedBodyReadout">Az 000 deg / Alt 00 deg</strong>
+          </div>
+          <div>
+            <span>Quelle</span>
+            <strong id="almanacNote">vereinfachter Almanach</strong>
           </div>
         </div>
       </section>
@@ -71,7 +115,7 @@
         <div class="two-column">
           <label>
             Objekt
-            <input id="objectName" type="text" value="Sonne">
+            <input id="objectName" type="text" value="Sonne" readonly>
           </label>
           <label>
             Indexfehler

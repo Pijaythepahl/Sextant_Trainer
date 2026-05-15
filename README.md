@@ -12,6 +12,17 @@ Eine mobile WebApp, die einen Sextanten als Messinstrument simuliert. Die App be
 - korrigierte Ablesung anzeigen
 - Messungen mit Zeitstempel speichern
 
+## MVP 2
+
+- Latitude und Longitude manuell eingeben
+- UTC-Zeit setzen oder auf den aktuellen Zeitpunkt springen
+- vereinfachten Almanach fuer Sonne, Mond, sichtbare Planeten und Navigationssterne berechnen
+- Gestirn aus einer Liste auswaehlen
+- Blick grob auf das gewaehlte Gestirn ausrichten
+- Messprotokoll mit Ort, Zeit, Zielhoehe und Zielazimut speichern
+
+Der Almanach ist fuer den Simulator gedacht und ersetzt keinen amtlichen Nautical Almanac.
+
 ## GitHub Pages
 
 Die App besteht nur aus statischen Dateien:

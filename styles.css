@@ -53,6 +53,7 @@ button:active {
 }
 
 .instrument,
+.almanac,
 .controls,
 .logbook {
   border: 1px solid var(--line);
@@ -66,6 +67,7 @@ button:active {
 
 .topbar,
 .status-strip,
+.almanac,
 .controls,
 .logbook {
   padding: 14px;
@@ -168,8 +170,53 @@ h2 {
   box-shadow: 0 0 18px rgba(245, 200, 75, 0.9), 0 0 48px rgba(245, 200, 75, 0.34);
 }
 
-.world-sun {
+.sky-objects {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.sky-object {
+  position: absolute;
+  width: 12px;
+  aspect-ratio: 1;
+  margin: -6px 0 0 -6px;
+  border-radius: 50%;
+  background: #d7e5ef;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  box-shadow: 0 0 10px rgba(215, 229, 239, 0.55);
   opacity: 0.72;
+  pointer-events: none;
+}
+
+.sky-object.is-selected {
+  width: 34px;
+  margin: -17px 0 0 -17px;
+  background: var(--accent);
+  box-shadow: 0 0 18px rgba(245, 200, 75, 0.9), 0 0 48px rgba(245, 200, 75, 0.34);
+  opacity: 0.84;
+}
+
+.sky-object.is-moon,
+.sky-object.is-selected.is-moon,
+.scope-sun.is-moon {
+  background: #d8d2bf;
+  box-shadow: 0 0 16px rgba(216, 210, 191, 0.55);
+}
+
+.sky-object.is-planet,
+.sky-object.is-selected.is-planet,
+.scope-sun.is-planet {
+  background: #e6c59a;
+}
+
+.sky-object.is-star,
+.sky-object.is-selected.is-star,
+.scope-sun.is-star {
+  width: 8px;
+  margin: -4px 0 0 -4px;
+  background: #eef6ff;
+  box-shadow: 0 0 12px rgba(238, 246, 255, 0.7);
 }
 
 .scope {
@@ -317,6 +364,7 @@ h2 {
 }
 
 .controls,
+.almanac,
 .logbook {
   margin-top: 12px;
 }
@@ -346,7 +394,9 @@ input[type="range"] {
 }
 
 input[type="text"],
-input[type="number"] {
+input[type="number"],
+input[type="datetime-local"],
+select {
   width: 100%;
   min-height: 42px;
   margin-top: 6px;
@@ -357,8 +407,30 @@ input[type="number"] {
   padding: 8px 10px;
 }
 
+.three-column {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1.5fr;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.three-column label,
+.almanac-actions label {
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
 .two-column > * {
   flex: 1;
+}
+
+.almanac-actions {
+  margin-top: 12px;
+}
+
+.almanac-result {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
 }
 
 .inline-input {
@@ -428,5 +500,12 @@ input[type="number"] {
 
   .readout {
     text-align: left;
+  }
+}
+
+@media (max-width: 520px) {
+  .three-column,
+  .almanac-result {
+    grid-template-columns: 1fr;
   }
 }
