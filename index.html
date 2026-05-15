@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>Handsextant MVP</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="instrument" aria-label="Sextanten-Simulator">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">MVP 1</p>
+            <h1>Handsextant</h1>
+          </div>
+          <div class="readout">
+            <span>Hs</span>
+            <strong id="sextantReading">00 deg 00.0'</strong>
+          </div>
+        </header>
+
+        <div class="sky-frame" id="skyFrame">
+          <div class="azimuth-scale" id="azimuthScale"></div>
+          <div class="world-horizon" id="worldHorizon"></div>
+          <div class="sun world-sun" id="worldSun" aria-hidden="true"></div>
+          <div class="scope" aria-label="Blick durch den Sextanten">
+            <div class="scope-pane scope-direct">
+              <div class="scope-below-horizon" id="directBelowHorizon"></div>
+              <div class="scope-horizon" id="directHorizon"></div>
+              <div class="sun scope-sun direct-sun" id="directSun" aria-hidden="true"></div>
+            </div>
+            <div class="scope-pane scope-mirror">
+              <div class="scope-below-horizon" id="mirrorBelowHorizon"></div>
+              <div class="scope-horizon" id="mirrorHorizon"></div>
+              <div class="sun scope-sun mirror-sun" id="mirrorSun" aria-hidden="true"></div>
+            </div>
+            <div class="scope-divider" aria-hidden="true"></div>
+            <div class="reticle" aria-hidden="true"></div>
+          </div>
+        </div>
+
+        <div class="status-strip">
+          <div>
+            <span>Blick</span>
+            <strong id="viewReadout">Az 000 deg / Alt 00 deg</strong>
+          </div>
+          <div>
+            <span>Sonne</span>
+            <strong id="targetReadout">Az 126 deg / Alt 38 deg</strong>
+          </div>
+        </div>
+      </section>
+
+      <section class="controls" aria-label="Bedienung">
+        <div class="control-group">
+          <label for="azimuth">Blick horizontal</label>
+          <input id="azimuth" type="range" min="0" max="359" value="92">
+        </div>
+
+        <div class="control-group">
+          <label for="altitude">Blick vertikal</label>
+          <input id="altitude" type="range" min="-10" max="80" value="18">
+        </div>
+
+        <div class="control-group primary-control">
+          <label for="indexAngle">Indexarm</label>
+          <input id="indexAngle" type="range" min="0" max="90" step="0.1" value="12">
+        </div>
+
+        <div class="two-column">
+          <label>
+            Objekt
+            <input id="objectName" type="text" value="Sonne">
+          </label>
+          <label>
+            Indexfehler
+            <span class="inline-input">
+              <input id="indexError" type="number" step="0.1" value="0.0">
+              <span>'</span>
+            </span>
+          </label>
+        </div>
+
+        <div class="result-panel">
+          <div>
+            <span>Korrigiert</span>
+            <strong id="correctedReading">00 deg 00.0'</strong>
+          </div>
+          <button id="saveMeasurement" type="button">Messung speichern</button>
+        </div>
+      </section>
+
+      <section class="logbook" aria-label="Messprotokoll">
+        <div class="section-title">
+          <h2>Messprotokoll</h2>
+          <button id="clearLog" type="button">Leeren</button>
+        </div>
+        <ol id="measurementList" class="measurement-list"></ol>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
