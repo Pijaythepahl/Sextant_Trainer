@@ -124,10 +124,18 @@ h2 {
   position: relative;
   height: min(64vh, 560px);
   min-height: 390px;
+  --world-horizon-y: 86%;
   overflow: hidden;
   border-block: 1px solid var(--line);
   background:
-    linear-gradient(to bottom, #233c4b 0%, #517784 48%, #d8b77b 50%, #34453a 51%, #12201d 100%);
+    linear-gradient(
+      to bottom,
+      #233c4b 0%,
+      #5f8997 calc(var(--world-horizon-y) - 3px),
+      #d8b77b var(--world-horizon-y),
+      #34453a calc(var(--world-horizon-y) + 3px),
+      #12201d 100%
+    );
   touch-action: none;
 }
 

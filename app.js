@@ -466,6 +466,10 @@ function renderHorizon(element, position) {
   element.style.display = position.visible ? "" : "none";
 }
 
+function renderWorldBackground(position) {
+  elements.skyFrame.style.setProperty("--world-horizon-y", `${position.y}%`);
+}
+
 function renderBelowHorizon(element, position) {
   element.style.top = `${position.y}%`;
   element.style.display = position.visible ? "" : "none";
@@ -503,6 +507,7 @@ function render() {
   elements.mirrorSun.className = `sun scope-sun mirror-sun is-${state.targetKind}`;
 
   renderWorldObjects();
+  renderWorldBackground(worldHorizonPosition);
   renderHorizon(elements.worldHorizon, worldHorizonPosition);
   renderSplitObject(elements.directSun, directPosition, "left");
   renderSplitObject(elements.mirrorSun, mirrorPosition, "right");
