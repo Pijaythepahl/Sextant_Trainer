@@ -11,7 +11,7 @@
       <section class="instrument" aria-label="Sextanten-Simulator">
         <header class="topbar">
           <div>
-            <p class="eyebrow">MVP 3</p>
+            <p class="eyebrow">MVP 4</p>
             <h1>Sextant Simulation</h1>
           </div>
         </header>
@@ -113,7 +113,9 @@
 
         <div class="almanac-content" id="almanacContent">
           <div class="almanac-toolbar">
-            <button id="useCurrentTime" type="button">Jetzt</button>
+            <button id="toggleLiveTime" class="is-live" type="button" aria-pressed="true">Live UTC</button>
+            <button id="useCurrentLocation" type="button">Standort uebernehmen</button>
+            <span id="locationStatus" class="toolbar-status" aria-live="polite"></span>
           </div>
 
           <div class="coordinate-grid">
@@ -149,7 +151,7 @@
             </label>
             <label>
               UTC
-              <input id="utcTime" type="datetime-local">
+              <input id="utcTime" type="datetime-local" step="1">
             </label>
           </div>
         </div>

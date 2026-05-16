@@ -41,6 +41,8 @@ const state = {
   indexErrorMinutes: 0,
   observerHeightMeters: 2,
   showSkyLabels: false,
+  liveTimeEnabled: true,
+  updatingTimeInput: false,
   measurements: [],
   bodies: [],
 };
@@ -135,7 +137,9 @@ const elements = {
   longitudeHemisphere: document.querySelector("#longitudeHemisphere"),
   utcTime: document.querySelector("#utcTime"),
   bodySelect: document.querySelector("#bodySelect"),
-  useCurrentTime: document.querySelector("#useCurrentTime"),
+  toggleLiveTime: document.querySelector("#toggleLiveTime"),
+  useCurrentLocation: document.querySelector("#useCurrentLocation"),
+  locationStatus: document.querySelector("#locationStatus"),
   toggleAlmanac: document.querySelector("#toggleAlmanac"),
   almanac: document.querySelector(".almanac"),
   toggleSkyLabels: document.querySelector("#toggleSkyLabels"),
@@ -192,6 +196,10 @@ function getSextantAngle() {
   return state.indexAngle + state.micrometerMinutes / 60;
 }
 
+function getOpticalSextantAngle() {
+  return getSextantAngle() + state.indexErrorMinutes / 60;
+}
+
 function getDipCorrectionDegrees() {
   return (1.76 * Math.sqrt(Math.max(state.observerHeightMeters, 0))) / 60;
 }
@@ -222,12 +230,20 @@ function toDateTimeLocalValue(date) {
   const time = [
     String(date.getUTCHours()).padStart(2, "0"),
     String(date.getUTCMinutes()).padStart(2, "0"),
+    String(date.getUTCSeconds()).padStart(2, "0"),
   ];
   return `${parts.join("-")}T${time.join(":")}`;
 }
 
 function getAlmanacDate() {
-  return new Date(`${elements.utcTime.value}:00Z`);
+  const date = new Date(`${elements.utcTime.value}Z`);
+  return Number.isNaN(date.getTime()) ? new Date() : date;
+}
+
+function setUtcTime(date) {
+  state.updatingTimeInput = true;
+  elements.utcTime.value = toDateTimeLocalValue(date);
+  state.updatingTimeInput = false;
 }
 
 function getSignedCoordinate(degreesElement, minutesElement, hemisphereElement, negativeHemisphere, maxDegrees) {
@@ -247,6 +263,26 @@ function getObserverPosition() {
 
 function formatCoordinate(degrees, minutes, hemisphere) {
   return `${Math.round(degrees)} deg ${Number(minutes).toFixed(3)}' ${hemisphere}`;
+}
+
+function setCoordinateFields(value, degreesElement, minutesElement, hemisphereElement, positiveHemisphere, negativeHemisphere) {
+  const absolute = Math.abs(value);
+  let degrees = Math.floor(absolute);
+  let minutes = (absolute - degrees) * 60;
+
+  if (minutes >= 59.9995) {
+    degrees += 1;
+    minutes = 0;
+  }
+
+  degreesElement.value = String(degrees);
+  minutesElement.value = minutes.toFixed(3);
+  hemisphereElement.value = value < 0 ? negativeHemisphere : positiveHemisphere;
+}
+
+function setObserverPosition(latitude, longitude) {
+  setCoordinateFields(latitude, elements.latitudeDeg, elements.latitudeMin, elements.latitudeHemisphere, "N", "S");
+  setCoordinateFields(longitude, elements.longitudeDeg, elements.longitudeMin, elements.longitudeHemisphere, "E", "W");
 }
 
 function getJulianDate(date) {
@@ -557,6 +593,72 @@ function refreshAlmanac() {
   render();
 }
 
+function tickLiveAlmanac() {
+  if (!state.liveTimeEnabled) {
+    return;
+  }
+
+  setUtcTime(new Date());
+  refreshAlmanac();
+}
+
+function setLiveTimeEnabled(enabled) {
+  state.liveTimeEnabled = enabled;
+  elements.toggleLiveTime.textContent = enabled ? "Live UTC" : "Manuelle UTC";
+  elements.toggleLiveTime.classList.toggle("is-live", enabled);
+  elements.toggleLiveTime.classList.toggle("is-manual", !enabled);
+  elements.toggleLiveTime.setAttribute("aria-pressed", String(enabled));
+
+  if (enabled) {
+    tickLiveAlmanac();
+  }
+}
+
+function handleManualTimeChange() {
+  if (!state.updatingTimeInput) {
+    setLiveTimeEnabled(false);
+  }
+
+  refreshAlmanac();
+}
+
+function setLocationStatus(message) {
+  elements.locationStatus.textContent = message;
+}
+
+function useCurrentLocation() {
+  if (!navigator.geolocation) {
+    setLocationStatus("Standort nicht verfuegbar.");
+    return;
+  }
+
+  setLocationStatus("Standort wird gesucht...");
+  elements.useCurrentLocation.disabled = true;
+
+  navigator.geolocation.getCurrentPosition(
+    (position) => {
+      setObserverPosition(position.coords.latitude, position.coords.longitude);
+      setLocationStatus(`Standort uebernommen, Genauigkeit ca. ${Math.round(position.coords.accuracy)} m.`);
+      elements.useCurrentLocation.disabled = false;
+      refreshAlmanac();
+    },
+    (error) => {
+      const messages = {
+        1: "Standortzugriff wurde abgelehnt.",
+        2: "Standort konnte nicht bestimmt werden.",
+        3: "Standortsuche hat zu lange gedauert.",
+      };
+      setLocationStatus(messages[error.code] || "Standort konnte nicht uebernommen werden.");
+      elements.useCurrentLocation.disabled = false;
+    },
+    {
+      enableHighAccuracy: true,
+      maximumAge: 30000,
+      timeout: 12000,
+    },
+  );
+}
+
 function getPosition(azimuth, altitude, centerAltitude, horizontalFov, verticalFov) {
   const azDelta = shortestAngleDelta(state.viewAzimuth, azimuth);
   const altDelta = altitude - centerAltitude;
@@ -634,8 +736,9 @@ function renderBelowHorizon(element, position) {
   element.style.display = position.visible ? "" : "none";
 }
 
-function renderScopeBackground(position) {
-  elements.scope.style.setProperty("--scope-horizon-y", `${position.y}%`);
+function renderScopeBackground(directPosition, mirrorPosition) {
+  elements.scope.style.setProperty("--scope-direct-horizon-y", `${directPosition.y}%`);
+  elements.scope.style.setProperty("--scope-mirror-horizon-y", `${mirrorPosition.y}%`);
 }
 
 function renderScopeOverlay() {
@@ -748,20 +851,22 @@ function renderScopeObjects(sextantAngle) {
 
 function render() {
   const sextantAngle = getSextantAngle();
+  const opticalSextantAngle = getOpticalSextantAngle();
   const visibleHorizonAltitude = -getDipCorrectionDegrees();
-  const scopeHorizonPosition = getScopePosition(state.viewAzimuth, visibleHorizonAltitude);
+  const directScopeHorizonPosition = getScopePosition(state.viewAzimuth, visibleHorizonAltitude);
+  const mirrorScopeHorizonPosition = getScopePosition(state.viewAzimuth, visibleHorizonAltitude - opticalSextantAngle);
   const worldHorizonPosition = getWorldHorizonPosition(state.viewAzimuth, visibleHorizonAltitude);
 
   renderWorldObjects();
-  renderScopeObjects(sextantAngle);
+  renderScopeObjects(opticalSextantAngle);
   renderWorldBackground(worldHorizonPosition);
   renderHorizon(elements.worldHorizon, worldHorizonPosition);
   renderScopeOverlay();
-  renderScopeBackground(scopeHorizonPosition);
-  renderHorizon(elements.directHorizon, scopeHorizonPosition);
-  renderHorizon(elements.mirrorHorizon, scopeHorizonPosition);
-  renderBelowHorizon(elements.directBelowHorizon, scopeHorizonPosition);
-  renderBelowHorizon(elements.mirrorBelowHorizon, scopeHorizonPosition);
+  renderScopeBackground(directScopeHorizonPosition, mirrorScopeHorizonPosition);
+  renderHorizon(elements.directHorizon, directScopeHorizonPosition);
+  renderHorizon(elements.mirrorHorizon, mirrorScopeHorizonPosition);
+  renderBelowHorizon(elements.directBelowHorizon, directScopeHorizonPosition);
+  renderBelowHorizon(elements.mirrorBelowHorizon, mirrorScopeHorizonPosition);
 
   elements.micrometerReadout.textContent = formatSignedMinutes(state.micrometerMinutes);
   elements.viewReadout.textContent = `Az ${String(Math.round(state.viewAzimuth)).padStart(3, "0")} deg / Alt ${formatViewAltitude(state.viewAltitude)}`;
@@ -841,7 +946,7 @@ function toggleSkyLabels() {
   elements.longitudeDeg.addEventListener(eventName, refreshAlmanac);
   elements.longitudeMin.addEventListener(eventName, refreshAlmanac);
   elements.longitudeHemisphere.addEventListener(eventName, refreshAlmanac);
-  elements.utcTime.addEventListener(eventName, refreshAlmanac);
+  elements.utcTime.addEventListener(eventName, handleManualTimeChange);
 });
 
 elements.bodySelect.addEventListener("change", () => {
@@ -849,11 +954,10 @@ elements.bodySelect.addEventListener("change", () => {
   render();
 });
 
-elements.useCurrentTime.addEventListener("click", () => {
-  elements.utcTime.value = toDateTimeLocalValue(new Date());
-  refreshAlmanac();
+elements.toggleLiveTime.addEventListener("click", () => {
+  setLiveTimeEnabled(!state.liveTimeEnabled);
 });
-
+elements.useCurrentLocation.addEventListener("click", useCurrentLocation);
 elements.toggleSkyLabels.addEventListener("click", toggleSkyLabels);
 elements.toggleAlmanac.addEventListener("click", toggleAlmanac);
 elements.saveMeasurement.addEventListener("click", saveMeasurement);
@@ -862,6 +966,7 @@ elements.clearLog.addEventListener("click", () => {
   renderMeasurements();
 });
 
-elements.utcTime.value = toDateTimeLocalValue(new Date());
+setUtcTime(new Date());
 refreshAlmanac();
 renderMeasurements();
+setInterval(tickLiveAlmanac, 1000);

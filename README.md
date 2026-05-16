@@ -31,6 +31,14 @@ Der Almanach ist fuer den Simulator gedacht und ersetzt keinen amtlichen Nautica
 - Sextantenansicht bei vertikaler Blickaenderung ueber der Realansicht mitbewegen
 - Beobachterhoehe mit Kimmtiefe in Darstellung und Messprotokoll beruecksichtigen
 
+## MVP 4
+
+- Almanach im Live-UTC-Modus jede Sekunde aktualisieren
+- Gestirne bewegen sich dadurch in Realansicht und Sextantenansicht automatisch weiter
+- UTC-Zeit weiterhin manuell setzen; manuelle Eingabe schaltet den Live-Modus aus
+- Browser-Standort in Latitude und Longitude uebernehmen
+- manuelle Standort-Eingabe bleibt erhalten
+
 ## GitHub Pages
 
 Die App besteht nur aus statischen Dateien:
