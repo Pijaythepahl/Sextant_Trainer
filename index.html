@@ -11,12 +11,8 @@
       <section class="instrument" aria-label="Sextanten-Simulator">
         <header class="topbar">
           <div>
-            <p class="eyebrow">MVP 2</p>
+            <p class="eyebrow">MVP 3</p>
             <h1>Sextant Simulation</h1>
-          </div>
-          <div class="readout">
-            <span>Hs</span>
-            <strong id="sextantReading">00 deg 00.0'</strong>
           </div>
         </header>
 
@@ -28,12 +24,12 @@
             <div class="scope-pane scope-direct">
               <div class="scope-below-horizon" id="directBelowHorizon"></div>
               <div class="scope-horizon" id="directHorizon"></div>
-              <div class="sun scope-sun direct-sun" id="directSun" aria-hidden="true"></div>
+              <div class="scope-objects" id="directScopeObjects" aria-hidden="true"></div>
             </div>
             <div class="scope-pane scope-mirror">
               <div class="scope-below-horizon" id="mirrorBelowHorizon"></div>
               <div class="scope-horizon" id="mirrorHorizon"></div>
-              <div class="sun scope-sun mirror-sun" id="mirrorSun" aria-hidden="true"></div>
+              <div class="scope-objects" id="mirrorScopeObjects" aria-hidden="true"></div>
             </div>
             <div class="scope-divider" aria-hidden="true"></div>
             <div class="reticle" aria-hidden="true"></div>
@@ -52,6 +48,14 @@
         </div>
       </section>
 
+      <section class="target-picker" aria-label="Gestirnauswahl">
+        <label>
+          Gestirn
+          <select id="bodySelect"></select>
+        </label>
+        <button id="toggleSkyLabels" type="button" aria-pressed="false">Namen anzeigen</button>
+      </section>
+
       <section class="controls" aria-label="Bedienung">
         <div class="control-group">
           <label for="azimuth">Blick horizontal</label>
@@ -64,12 +68,12 @@
         </div>
 
         <div class="control-group primary-control">
-          <label for="indexAngle">Indexarm</label>
-          <input id="indexAngle" type="range" min="0" max="90" step="0.5" value="12">
+          <label for="indexAngle">Alhidade (Indexarm)</label>
+          <input id="indexAngle" type="range" min="0" max="90" step="0.5" value="0">
         </div>
 
         <div class="control-group fine-control">
-          <label for="micrometerMinutes">Schnecke</label>
+          <label for="micrometerMinutes">Mikrometer-Trommel</label>
           <span class="range-with-readout">
             <input id="micrometerMinutes" type="range" min="-30" max="30" step="0.1" value="0">
             <strong id="micrometerReadout">+0.0'</strong>
@@ -78,8 +82,11 @@
 
         <div class="two-column">
           <label>
-            Objekt
-            <input id="objectName" type="text" value="Sonne" readonly>
+            Beobachterhöhe
+            <span class="inline-input">
+              <input id="observerHeight" type="number" min="0" max="60" step="0.1" value="2.0">
+              <span>m</span>
+            </span>
           </label>
           <label>
             Indexfehler
@@ -91,76 +98,59 @@
         </div>
 
         <div class="result-panel">
-          <div>
-            <span>Korrigiert</span>
-            <strong id="correctedReading">00 deg 00.0'</strong>
-          </div>
           <button id="saveMeasurement" type="button">Messung speichern</button>
         </div>
       </section>
 
-      <section class="almanac" aria-label="Almanach">
+      <section class="almanac is-collapsed" aria-label="Almanach">
         <div class="section-title">
           <div>
             <p class="eyebrow">Almanach</p>
             <h2>Beobachterdaten</h2>
           </div>
-          <button id="useCurrentTime" type="button">Jetzt</button>
+          <button id="toggleAlmanac" type="button" aria-expanded="false" aria-controls="almanacContent">Ausklappen</button>
         </div>
 
-        <div class="coordinate-grid">
-          <label>
-            Lat deg
-            <input id="latitudeDeg" type="number" min="0" max="90" step="1" value="53">
-          </label>
-          <label>
-            Lat min
-            <input id="latitudeMin" type="number" min="0" max="59.999" step="0.001" value="33.066">
-          </label>
-          <label>
-            N/S
-            <select id="latitudeHemisphere">
-              <option value="N">N</option>
-              <option value="S">S</option>
-            </select>
-          </label>
-          <label>
-            Lon deg
-            <input id="longitudeDeg" type="number" min="0" max="180" step="1" value="9">
-          </label>
-          <label>
-            Lon min
-            <input id="longitudeMin" type="number" min="0" max="59.999" step="0.001" value="59.622">
-          </label>
-          <label>
-            E/W
-            <select id="longitudeHemisphere">
-              <option value="E">E</option>
-              <option value="W">W</option>
-            </select>
-          </label>
-          <label>
-            UTC
-            <input id="utcTime" type="datetime-local">
-          </label>
-        </div>
-
-        <div class="two-column almanac-actions">
-          <label>
-            Gestirn
-            <select id="bodySelect"></select>
-          </label>
-          <button id="aimSelectedBody" type="button">Blick ausrichten</button>
-        </div>
-
-        <div class="result-panel almanac-result">
-          <div>
-            <span>Berechnet</span>
-            <strong id="selectedBodyReadout">Az 000 deg / Alt 00 deg</strong>
+        <div class="almanac-content" id="almanacContent">
+          <div class="almanac-toolbar">
+            <button id="useCurrentTime" type="button">Jetzt</button>
           </div>
-          <div>
-            <span>Quelle</span>
-            <strong id="almanacNote">vereinfachter Almanach</strong>
+
+          <div class="coordinate-grid">
+            <label>
+              Lat deg
+              <input id="latitudeDeg" type="number" min="0" max="90" step="1" value="53">
+            </label>
+            <label>
+              Lat min
+              <input id="latitudeMin" type="number" min="0" max="59.999" step="0.001" value="33.066">
+            </label>
+            <label>
+              N/S
+              <select id="latitudeHemisphere">
+                <option value="N">N</option>
+                <option value="S">S</option>
+              </select>
+            </label>
+            <label>
+              Lon deg
+              <input id="longitudeDeg" type="number" min="0" max="180" step="1" value="9">
+            </label>
+            <label>
+              Lon min
+              <input id="longitudeMin" type="number" min="0" max="59.999" step="0.001" value="59.622">
+            </label>
+            <label>
+              E/W
+              <select id="longitudeHemisphere">
+                <option value="E">E</option>
+                <option value="W">W</option>
+              </select>
+            </label>
+            <label>
+              UTC
+              <input id="utcTime" type="datetime-local">
+            </label>
           </div>
         </div>
       </section>

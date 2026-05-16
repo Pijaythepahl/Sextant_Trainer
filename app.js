@@ -2,15 +2,25 @@ const RAD = Math.PI / 180;
 const DEG = 180 / Math.PI;
 const ALTITUDE_VIEW = {
   topAltitude: 90,
+  bottomAltitude: -10,
+  topY: 8,
+  bottomY: 94,
+};
+const WORLD_HORIZON_VIEW = {
+  topAltitude: 90,
   bottomAltitude: 0,
   topY: 8,
+  bottomY: 86,
+};
+const SCOPE_OVERLAY_LIMITS = {
+  topY: 18,
   bottomY: 86,
 };
 const SCOPE_VIEW = {
   topOffset: 1,
   bottomOffset: -1,
-  topY: 8,
-  bottomY: 86,
+  topY: 10,
+  bottomY: 90,
 };
 const LIMB_OFFSETS = {
   sun: 16 / 60,
@@ -26,9 +36,11 @@ const state = {
   targetComputedAt: "",
   viewAzimuth: 92,
   viewAltitude: 18,
-  indexAngle: 12,
+  indexAngle: 0,
   micrometerMinutes: 0,
   indexErrorMinutes: 0,
+  observerHeightMeters: 2,
+  showSkyLabels: false,
   measurements: [],
   bodies: [],
 };
@@ -102,19 +114,19 @@ const elements = {
   scope: document.querySelector(".scope"),
   worldHorizon: document.querySelector("#worldHorizon"),
   worldObjects: document.querySelector("#worldObjects"),
+  directScopeObjects: document.querySelector("#directScopeObjects"),
+  mirrorScopeObjects: document.querySelector("#mirrorScopeObjects"),
   directBelowHorizon: document.querySelector("#directBelowHorizon"),
   mirrorBelowHorizon: document.querySelector("#mirrorBelowHorizon"),
   directHorizon: document.querySelector("#directHorizon"),
   mirrorHorizon: document.querySelector("#mirrorHorizon"),
-  directSun: document.querySelector("#directSun"),
-  mirrorSun: document.querySelector("#mirrorSun"),
   azimuth: document.querySelector("#azimuth"),
   altitude: document.querySelector("#altitude"),
   indexAngle: document.querySelector("#indexAngle"),
   micrometerMinutes: document.querySelector("#micrometerMinutes"),
   micrometerReadout: document.querySelector("#micrometerReadout"),
   indexError: document.querySelector("#indexError"),
-  objectName: document.querySelector("#objectName"),
+  observerHeight: document.querySelector("#observerHeight"),
   latitudeDeg: document.querySelector("#latitudeDeg"),
   latitudeMin: document.querySelector("#latitudeMin"),
   latitudeHemisphere: document.querySelector("#latitudeHemisphere"),
@@ -124,12 +136,11 @@ const elements = {
   utcTime: document.querySelector("#utcTime"),
   bodySelect: document.querySelector("#bodySelect"),
   useCurrentTime: document.querySelector("#useCurrentTime"),
-  aimSelectedBody: document.querySelector("#aimSelectedBody"),
-  selectedBodyReadout: document.querySelector("#selectedBodyReadout"),
-  almanacNote: document.querySelector("#almanacNote"),
+  toggleAlmanac: document.querySelector("#toggleAlmanac"),
+  almanac: document.querySelector(".almanac"),
+  toggleSkyLabels: document.querySelector("#toggleSkyLabels"),
   targetLabel: document.querySelector("#targetLabel"),
-  sextantReading: document.querySelector("#sextantReading"),
-  correctedReading: document.querySelector("#correctedReading"),
+  sextantReading: document.querySelector("#targetReadout"),
   viewReadout: document.querySelector("#viewReadout"),
   targetReadout: document.querySelector("#targetReadout"),
   saveMeasurement: document.querySelector("#saveMeasurement"),
@@ -161,6 +172,10 @@ function atan2Deg(y, x) {
   return normalizeDegrees(Math.atan2(y, x) * DEG);
 }
 
+function atan2SignedDeg(y, x) {
+  return Math.atan2(y, x) * DEG;
+}
+
 function asinDeg(value) {
   return Math.asin(clamp(value, -1, 1)) * DEG;
 }
@@ -177,12 +192,20 @@ function getSextantAngle() {
   return state.indexAngle + state.micrometerMinutes / 60;
 }
 
+function getDipCorrectionDegrees() {
+  return (1.76 * Math.sqrt(Math.max(state.observerHeightMeters, 0))) / 60;
+}
+
 function formatSignedMinutes(minutes) {
   return `${minutes >= 0 ? "+" : ""}${minutes.toFixed(1)}'`;
 }
 
 function formatShortAngle(angle) {
   return `${Math.round(normalizeDegrees(angle))} deg`;
+}
+
+function formatViewAltitude(angle) {
+  return `${Number(angle).toFixed(1)} deg`;
 }
 
 function projectAltitudeToY(altitude, topAltitude, bottomAltitude, topY, bottomY) {
@@ -236,10 +259,14 @@ function getGreenwichSiderealTime(jd) {
   return normalizeDegrees(280.46061837 + 360.98564736629 * d + 0.000387933 * t * t - (t * t * t) / 38710000);
 }
 
-function equatorialToHorizontal(raHours, decDegrees, latitude, longitude, jd) {
+function getLocalHourAngle(raHours, longitude, jd) {
   const lst = normalizeDegrees(getGreenwichSiderealTime(jd) + longitude);
   const hourAngle = normalizeDegrees(lst - raHours * 15);
-  const h = hourAngle > 180 ? hourAngle - 360 : hourAngle;
+  return hourAngle > 180 ? hourAngle - 360 : hourAngle;
+}
+
+function equatorialToHorizontal(raHours, decDegrees, latitude, longitude, jd) {
+  const h = getLocalHourAngle(raHours, longitude, jd);
   const alt = asinDeg(sinDeg(latitude) * sinDeg(decDegrees) + cosDeg(latitude) * cosDeg(decDegrees) * cosDeg(h));
   const az = atan2Deg(
     -sinDeg(h),
@@ -249,19 +276,59 @@ function equatorialToHorizontal(raHours, decDegrees, latitude, longitude, jd) {
   return { azimuth: az, altitude: alt };
 }
 
-function eclipticToEquatorial(lambda, beta, jd) {
-  const d = jd - 2451545.0;
-  const epsilon = 23.4393 - 3.563e-7 * d;
+function getMeanObliquity(jd) {
+  const t = (jd - 2451545.0) / 36525;
+  const seconds = 21.448 - t * (46.815 + t * (0.00059 - t * 0.001813));
+  return 23 + 26 / 60 + seconds / 3600;
+}
+
+function getApparentObliquity(jd) {
+  const t = (jd - 2451545.0) / 36525;
+  const omega = normalizeDegrees(125.04 - 1934.136 * t);
+  return getMeanObliquity(jd) + 0.00256 * cosDeg(omega);
+}
+
+function eclipticToEquatorial(lambda, beta, jd, obliquity = getMeanObliquity(jd)) {
   const x = cosDeg(lambda) * cosDeg(beta);
   const y = sinDeg(lambda) * cosDeg(beta);
   const z = sinDeg(beta);
   const xe = x;
-  const ye = y * cosDeg(epsilon) - z * sinDeg(epsilon);
-  const ze = y * sinDeg(epsilon) + z * cosDeg(epsilon);
+  const ye = y * cosDeg(obliquity) - z * sinDeg(obliquity);
+  const ze = y * sinDeg(obliquity) + z * cosDeg(obliquity);
   const ra = atan2Deg(ye, xe) / 15;
   const dec = asinDeg(ze);
 
   return { ra, dec };
+}
+
+function applyTopocentricParallax(equatorial, latitude, longitude, jd) {
+  if (!equatorial.distanceEarthRadii) {
+    return equatorial;
+  }
+
+  const horizontalParallax = asinDeg(1 / equatorial.distanceEarthRadii);
+  const hourAngle = getLocalHourAngle(equatorial.ra, longitude, jd);
+  const rhoSinPhi = 0.99833 * sinDeg(latitude);
+  const rhoCosPhi = cosDeg(latitude);
+  const deltaRa = atan2SignedDeg(
+    -rhoCosPhi * sinDeg(horizontalParallax) * sinDeg(hourAngle),
+    cosDeg(equatorial.dec) - rhoCosPhi * sinDeg(horizontalParallax) * cosDeg(hourAngle),
+  );
+  const ra = normalizeDegrees(equatorial.ra * 15 + deltaRa) / 15;
+  const dec = atan2SignedDeg(
+    (sinDeg(equatorial.dec) - rhoSinPhi * sinDeg(horizontalParallax)) * cosDeg(deltaRa),
+    cosDeg(equatorial.dec) - rhoCosPhi * sinDeg(horizontalParallax) * cosDeg(hourAngle),
+  );
+
+  return { ...equatorial, ra, dec };
+}
+
+function getAtmosphericRefraction(altitude) {
+  if (altitude < -1 || altitude > 89.9) {
+    return 0;
+  }
+
+  return 1.02 / Math.tan((altitude + 10.3 / (altitude + 5.11)) * RAD) / 60;
 }
 
 function solveKepler(meanAnomaly, eccentricity) {
@@ -276,12 +343,18 @@ function solveKepler(meanAnomaly, eccentricity) {
 }
 
 function getSunEquatorial(jd) {
-  const d = jd - 2451545.0;
-  const meanLongitude = normalizeDegrees(280.46 + 0.9856474 * d);
-  const meanAnomaly = normalizeDegrees(357.528 + 0.9856003 * d);
-  const lambda = normalizeDegrees(meanLongitude + 1.915 * sinDeg(meanAnomaly) + 0.02 * sinDeg(2 * meanAnomaly));
+  const t = (jd - 2451545.0) / 36525;
+  const meanLongitude = normalizeDegrees(280.46646 + 36000.76983 * t + 0.0003032 * t * t);
+  const meanAnomaly = normalizeDegrees(357.52911 + 35999.05029 * t - 0.0001537 * t * t);
+  const center =
+    (1.914602 - 0.004817 * t - 0.000014 * t * t) * sinDeg(meanAnomaly) +
+    (0.019993 - 0.000101 * t) * sinDeg(2 * meanAnomaly) +
+    0.000289 * sinDeg(3 * meanAnomaly);
+  const trueLongitude = meanLongitude + center;
+  const omega = normalizeDegrees(125.04 - 1934.136 * t);
+  const lambda = normalizeDegrees(trueLongitude - 0.00569 - 0.00478 * sinDeg(omega));
 
-  return eclipticToEquatorial(lambda, 0, jd);
+  return eclipticToEquatorial(lambda, 0, jd, getApparentObliquity(jd));
 }
 
 function getMoonEquatorial(jd) {
@@ -300,10 +373,38 @@ function getMoonEquatorial(jd) {
   const xh = r * (cosDeg(N) * cosDeg(v + w) - sinDeg(N) * sinDeg(v + w) * cosDeg(i));
   const yh = r * (sinDeg(N) * cosDeg(v + w) + cosDeg(N) * sinDeg(v + w) * cosDeg(i));
   const zh = r * sinDeg(v + w) * sinDeg(i);
-  const lambda = atan2Deg(yh, xh);
-  const beta = atan2Deg(zh, Math.sqrt(xh * xh + yh * yh));
+  const rawLambda = atan2Deg(yh, xh);
+  const rawBeta = atan2Deg(zh, Math.sqrt(xh * xh + yh * yh));
+  const Lm = normalizeDegrees(N + w + M);
+  const Ms = normalizeDegrees(356.047 + 0.9856002585 * d);
+  const Ls = normalizeDegrees(282.9404 + 4.70935e-5 * d + Ms);
+  const D = normalizeDegrees(Lm - Ls);
+  const F = normalizeDegrees(Lm - N);
+  const lambda = normalizeDegrees(
+    rawLambda -
+      1.274 * sinDeg(M - 2 * D) +
+      0.658 * sinDeg(2 * D) -
+      0.186 * sinDeg(Ms) -
+      0.059 * sinDeg(2 * M - 2 * D) -
+      0.057 * sinDeg(M - 2 * D + Ms) +
+      0.053 * sinDeg(M + 2 * D) +
+      0.046 * sinDeg(2 * D - Ms) +
+      0.041 * sinDeg(M - Ms) -
+      0.035 * sinDeg(D) -
+      0.031 * sinDeg(M + Ms) -
+      0.015 * sinDeg(2 * F - 2 * D) +
+      0.011 * sinDeg(M - 4 * D),
+  );
+  const beta =
+    (rawBeta > 180 ? rawBeta - 360 : rawBeta) -
+    0.173 * sinDeg(F - 2 * D) -
+    0.055 * sinDeg(M - F - 2 * D) -
+    0.046 * sinDeg(M + F - 2 * D) +
+    0.033 * sinDeg(F + 2 * D) +
+    0.017 * sinDeg(2 * M + F);
+  const equatorial = eclipticToEquatorial(lambda, beta, jd);
 
-  return eclipticToEquatorial(lambda, beta > 180 ? beta - 360 : beta, jd);
+  return { ...equatorial, distanceEarthRadii: r };
 }
 
 function getOrbitalValue(pair, d) {
@@ -362,17 +463,22 @@ function getPlanetEquatorial(name, jd) {
 }
 
 function makeBody(id, name, kind, equatorial, latitude, longitude, jd, limbOffset = 0) {
-  const horizontal = equatorialToHorizontal(equatorial.ra, equatorial.dec, latitude, longitude, jd);
+  const topocentric = applyTopocentricParallax(equatorial, latitude, longitude, jd);
+  const horizontal = equatorialToHorizontal(topocentric.ra, topocentric.dec, latitude, longitude, jd);
+  const refraction = getAtmosphericRefraction(horizontal.altitude);
+  const apparentCenterAltitude = horizontal.altitude + refraction;
 
   return {
     id,
     name,
     kind,
-    ra: equatorial.ra,
-    dec: equatorial.dec,
+    ra: topocentric.ra,
+    dec: topocentric.dec,
     azimuth: horizontal.azimuth,
-    altitude: horizontal.altitude + limbOffset,
-    centerAltitude: horizontal.altitude,
+    altitude: apparentCenterAltitude + limbOffset,
+    centerAltitude: apparentCenterAltitude,
+    geometricAltitude: horizontal.altitude,
+    refraction,
     limbOffset,
   };
 }
@@ -424,7 +530,6 @@ function syncTargetFromSelectedBody() {
   state.targetCenterAltitude = body.centerAltitude;
   state.targetName = body.name;
   state.targetKind = body.kind;
-  elements.objectName.value = body.name;
 }
 
 function renderBodyOptions(previousValue) {
@@ -477,6 +582,24 @@ function getWorldPosition(azimuth, altitude) {
   };
 }
 
+function getWorldHorizonPosition(azimuth, altitude) {
+  const azDelta = shortestAngleDelta(state.viewAzimuth, azimuth);
+  const x = 50 + (azDelta / 150) * 100;
+  const y = projectAltitudeToY(
+    altitude,
+    WORLD_HORIZON_VIEW.topAltitude,
+    WORLD_HORIZON_VIEW.bottomAltitude,
+    WORLD_HORIZON_VIEW.topY,
+    WORLD_HORIZON_VIEW.bottomY,
+  );
+
+  return {
+    x: clamp(x, -12, 112),
+    y: clamp(y, -12, 112),
+    visible: Math.abs(azDelta) <= 93 && altitude >= -8 && altitude <= 96,
+  };
+}
+
 function getScopePosition(azimuth, altitude) {
   const azDelta = shortestAngleDelta(state.viewAzimuth, azimuth);
   const topAltitude = state.viewAltitude + SCOPE_VIEW.topOffset;
@@ -497,15 +620,6 @@ function renderObject(element, position) {
   element.style.opacity = position.visible ? "" : "0.16";
 }
 
-function renderSplitObject(element, position, side) {
-  const localX = side === "left" ? position.x * 2 : (position.x - 50) * 2;
-  const insidePane = localX >= -22 && localX <= 122;
-
-  element.style.left = `${localX}%`;
-  element.style.top = `${position.y}%`;
-  element.style.opacity = position.visible && insidePane ? "" : "0";
-}
-
 function renderHorizon(element, position) {
   element.style.top = `${position.y}%`;
   element.style.display = position.visible ? "" : "none";
@@ -524,55 +638,136 @@ function renderScopeBackground(position) {
   elements.scope.style.setProperty("--scope-horizon-y", `${position.y}%`);
 }
 
+function renderScopeOverlay() {
+  const y = projectAltitudeToY(
+    state.viewAltitude,
+    ALTITUDE_VIEW.topAltitude,
+    ALTITUDE_VIEW.bottomAltitude,
+    ALTITUDE_VIEW.topY,
+    ALTITUDE_VIEW.bottomY,
+  );
+
+  elements.scope.style.setProperty("--scope-y", `${clamp(y, SCOPE_OVERLAY_LIMITS.topY, SCOPE_OVERLAY_LIMITS.bottomY)}%`);
+}
+
 function renderWorldObjects() {
   elements.worldObjects.innerHTML = "";
 
+  const renderedCenterBodies = new Set();
+
   state.bodies.forEach((body) => {
-    const position = getWorldPosition(body.azimuth, body.altitude);
+    const display = getDisplayBody(body);
+
+    if (renderedCenterBodies.has(display.key)) {
+      return;
+    }
+
+    renderedCenterBodies.add(display.key);
+
+    const position = getWorldPosition(body.azimuth, body.centerAltitude);
     const marker = document.createElement("div");
-    marker.className = `sky-object is-${body.kind}${body.name === state.targetName ? " is-selected" : ""}`;
+    marker.className = `sky-object is-${body.kind}`;
     marker.style.left = `${position.x}%`;
     marker.style.top = `${position.y}%`;
     marker.style.opacity = position.visible ? "" : "0";
-    marker.title = body.name;
+    marker.title = display.name;
     elements.worldObjects.append(marker);
+
+    if (state.showSkyLabels && position.visible) {
+      const label = document.createElement("div");
+      label.className = `sky-label is-${body.kind}`;
+      label.style.left = `${position.x}%`;
+      label.style.top = `${position.y}%`;
+      const labelText = document.createElement("span");
+      labelText.className = "sky-label-text";
+      labelText.textContent = display.name;
+      label.append(labelText);
+      elements.worldObjects.append(label);
+    }
+  });
+}
+
+function getDisplayBody(body) {
+  const isDiscBody = body.kind === "sun" || body.kind === "moon";
+
+  return {
+    key: isDiscBody ? body.kind : body.id,
+    name: isDiscBody ? (body.kind === "sun" ? "Sonne" : "Mond") : body.name,
+  };
+}
+
+function appendScopeObject(container, body, altitude, side) {
+  const display = getDisplayBody(body);
+  const position = getScopePosition(body.azimuth, altitude);
+  const localX = side === "left" ? position.x * 2 : (position.x - 50) * 2;
+  const insidePane = localX >= -22 && localX <= 122;
+
+  if (!position.visible || !insidePane) {
+    return;
+  }
+
+  const marker = document.createElement("div");
+  marker.className = `scope-object is-${body.kind}`;
+  marker.style.left = `${localX}%`;
+  marker.style.top = `${position.y}%`;
+  marker.title = display.name;
+  container.append(marker);
+
+  if (state.showSkyLabels) {
+    const label = document.createElement("div");
+    label.className = `sky-label scope-label is-${body.kind}`;
+    label.style.left = `${localX}%`;
+    label.style.top = `${position.y}%`;
+    const labelText = document.createElement("span");
+    labelText.className = "sky-label-text";
+    labelText.textContent = display.name;
+    label.append(labelText);
+    container.append(label);
+  }
+}
+
+function renderScopeObjects(sextantAngle) {
+  elements.directScopeObjects.innerHTML = "";
+  elements.mirrorScopeObjects.innerHTML = "";
+
+  const renderedCenterBodies = new Set();
+
+  state.bodies.forEach((body) => {
+    const display = getDisplayBody(body);
+
+    if (renderedCenterBodies.has(display.key)) {
+      return;
+    }
+
+    renderedCenterBodies.add(display.key);
+
+    appendScopeObject(elements.directScopeObjects, body, body.centerAltitude, "left");
+    appendScopeObject(elements.mirrorScopeObjects, body, body.centerAltitude - sextantAngle, "right");
   });
 }
 
 function render() {
-  const selectedBody = getSelectedBody();
   const sextantAngle = getSextantAngle();
-  const directPosition = getScopePosition(state.targetAzimuth, state.targetCenterAltitude);
-  const reflectedAltitude = state.targetCenterAltitude - sextantAngle;
-  const mirrorPosition = getScopePosition(state.targetAzimuth, reflectedAltitude);
-  const scopeHorizonPosition = getScopePosition(state.viewAzimuth, 0);
-  const worldHorizonPosition = getWorldPosition(state.viewAzimuth, 0);
-  const correctedAngle = sextantAngle + state.indexErrorMinutes / 60;
-
-  elements.directSun.className = `sun scope-sun direct-sun is-${state.targetKind}`;
-  elements.mirrorSun.className = `sun scope-sun mirror-sun is-${state.targetKind}`;
+  const visibleHorizonAltitude = -getDipCorrectionDegrees();
+  const scopeHorizonPosition = getScopePosition(state.viewAzimuth, visibleHorizonAltitude);
+  const worldHorizonPosition = getWorldHorizonPosition(state.viewAzimuth, visibleHorizonAltitude);
 
   renderWorldObjects();
+  renderScopeObjects(sextantAngle);
   renderWorldBackground(worldHorizonPosition);
   renderHorizon(elements.worldHorizon, worldHorizonPosition);
-  renderSplitObject(elements.directSun, directPosition, "left");
-  renderSplitObject(elements.mirrorSun, mirrorPosition, "right");
+  renderScopeOverlay();
   renderScopeBackground(scopeHorizonPosition);
   renderHorizon(elements.directHorizon, scopeHorizonPosition);
   renderHorizon(elements.mirrorHorizon, scopeHorizonPosition);
   renderBelowHorizon(elements.directBelowHorizon, scopeHorizonPosition);
   renderBelowHorizon(elements.mirrorBelowHorizon, scopeHorizonPosition);
 
-  elements.sextantReading.textContent = formatAngle(sextantAngle);
-  elements.correctedReading.textContent = formatAngle(correctedAngle);
   elements.micrometerReadout.textContent = formatSignedMinutes(state.micrometerMinutes);
-  elements.viewReadout.textContent = `Az ${String(Math.round(state.viewAzimuth)).padStart(3, "0")} deg / Alt ${Math.round(state.viewAltitude)} deg`;
-  elements.targetLabel.textContent = state.targetName;
-  elements.targetReadout.textContent = `Az ${Math.round(state.targetAzimuth)} deg / Alt ${Math.round(state.targetAltitude)} deg`;
+  elements.viewReadout.textContent = `Az ${String(Math.round(state.viewAzimuth)).padStart(3, "0")} deg / Alt ${formatViewAltitude(state.viewAltitude)}`;
+  elements.targetLabel.textContent = "Hs";
+  elements.sextantReading.textContent = formatAngle(sextantAngle);
 
-  if (selectedBody) {
-    elements.selectedBodyReadout.textContent = `Az ${formatShortAngle(selectedBody.azimuth)} / Alt ${formatAngle(selectedBody.altitude)}`;
-  }
 }
 
 function renderMeasurements() {
@@ -581,8 +776,8 @@ function renderMeasurements() {
   state.measurements.forEach((measurement) => {
     const item = document.createElement("li");
     item.innerHTML = `
-      <strong>${measurement.object} / ${measurement.corrected}</strong>
-      <span>${measurement.time} UTC / Hs ${measurement.raw} / IE ${measurement.indexError}</span>
+      <strong>${measurement.object} / Hs ${measurement.raw}</strong>
+      <span>${measurement.time} UTC / IE ${measurement.indexError}</span>
       <span>Almanach ${measurement.target} / Ort ${measurement.location}</span>
     `;
     elements.measurementList.append(item);
@@ -591,17 +786,16 @@ function renderMeasurements() {
 
 function saveMeasurement() {
   const sextantAngle = getSextantAngle();
-  const corrected = sextantAngle + state.indexErrorMinutes / 60;
+  const dipCorrection = getDipCorrectionDegrees();
   const indexError = `${state.indexErrorMinutes >= 0 ? "+" : ""}${state.indexErrorMinutes.toFixed(1)}'`;
   const date = getAlmanacDate();
 
   state.measurements.unshift({
-    object: elements.objectName.value.trim() || "Objekt",
+    object: state.targetName,
     time: date.toISOString().replace("T", " ").slice(0, 19),
     raw: formatAngle(sextantAngle),
-    corrected: formatAngle(corrected),
     indexError,
-    location: `${formatCoordinate(elements.latitudeDeg.value, elements.latitudeMin.value, elements.latitudeHemisphere.value)} / ${formatCoordinate(elements.longitudeDeg.value, elements.longitudeMin.value, elements.longitudeHemisphere.value)}`,
+    location: `${formatCoordinate(elements.latitudeDeg.value, elements.latitudeMin.value, elements.latitudeHemisphere.value)} / ${formatCoordinate(elements.longitudeDeg.value, elements.longitudeMin.value, elements.longitudeHemisphere.value)} / Auge ${state.observerHeightMeters.toFixed(1)} m / Dip -${formatAngle(dipCorrection)}`,
     target: `Az ${Math.round(state.targetAzimuth)} deg / Alt ${formatAngle(state.targetAltitude)}`,
   });
 
@@ -614,26 +808,21 @@ function updateFromInputs() {
   state.indexAngle = Number(elements.indexAngle.value);
   state.micrometerMinutes = Number(elements.micrometerMinutes.value);
   state.indexErrorMinutes = Number(elements.indexError.value || 0);
+  state.observerHeightMeters = Number(elements.observerHeight.value || 0);
   render();
 }
 
-function setViewFromPointer(event) {
-  const rect = elements.skyFrame.getBoundingClientRect();
-  const x = clamp((event.clientX - rect.left) / rect.width, 0, 1);
-  const y = clamp((event.clientY - rect.top) / rect.height, 0, 1);
-  const azimuth = (state.viewAzimuth + (x - 0.5) * 110 + 360) % 360;
-  const altitude = clamp(state.viewAltitude + (0.5 - y) * 42, -10, 80);
-
-  elements.azimuth.value = Math.round(azimuth);
-  elements.altitude.value = Math.round(altitude);
-  updateFromInputs();
+function toggleAlmanac() {
+  const isCollapsed = elements.almanac.classList.toggle("is-collapsed");
+  elements.toggleAlmanac.textContent = isCollapsed ? "Ausklappen" : "Einklappen";
+  elements.toggleAlmanac.setAttribute("aria-expanded", String(!isCollapsed));
 }
 
-function aimAtSelectedBody() {
-  syncTargetFromSelectedBody();
-  elements.azimuth.value = Math.round(state.targetAzimuth);
-  elements.altitude.value = Math.round(clamp(state.targetCenterAltitude, -10, 80) * 2) / 2;
-  updateFromInputs();
+function toggleSkyLabels() {
+  state.showSkyLabels = !state.showSkyLabels;
+  elements.toggleSkyLabels.textContent = state.showSkyLabels ? "Namen ausblenden" : "Namen anzeigen";
+  elements.toggleSkyLabels.setAttribute("aria-pressed", String(state.showSkyLabels));
+  render();
 }
 
 ["input", "change"].forEach((eventName) => {
@@ -642,6 +831,7 @@ function aimAtSelectedBody() {
   elements.indexAngle.addEventListener(eventName, updateFromInputs);
   elements.micrometerMinutes.addEventListener(eventName, updateFromInputs);
   elements.indexError.addEventListener(eventName, updateFromInputs);
+  elements.observerHeight.addEventListener(eventName, updateFromInputs);
 });
 
 ["change", "input"].forEach((eventName) => {
@@ -664,22 +854,12 @@ elements.useCurrentTime.addEventListener("click", () => {
   refreshAlmanac();
 });
 
-elements.aimSelectedBody.addEventListener("click", aimAtSelectedBody);
+elements.toggleSkyLabels.addEventListener("click", toggleSkyLabels);
+elements.toggleAlmanac.addEventListener("click", toggleAlmanac);
 elements.saveMeasurement.addEventListener("click", saveMeasurement);
 elements.clearLog.addEventListener("click", () => {
   state.measurements = [];
   renderMeasurements();
-});
-
-elements.skyFrame.addEventListener("pointerdown", (event) => {
-  elements.skyFrame.setPointerCapture(event.pointerId);
-  setViewFromPointer(event);
-});
-
-elements.skyFrame.addEventListener("pointermove", (event) => {
-  if (event.buttons === 1) {
-    setViewFromPointer(event);
-  }
 });
 
 elements.utcTime.value = toDateTimeLocalValue(new Date());

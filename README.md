@@ -9,7 +9,7 @@ Eine mobile WebApp, die einen Sextanten als Messinstrument simuliert. Die App be
 - reflektiertes Sonnenbild mit Indexarm und Schnecke auf den Horizont bringen
 - Sextantenablesung als `Hs` anzeigen
 - Indexfehler in Minuten einstellen
-- korrigierte Ablesung anzeigen
+- Indexfehler als Rechenwert fuer eigene Korrektur erfassen
 - Messungen mit Zeitstempel speichern
 
 ## MVP 2
@@ -22,6 +22,14 @@ Eine mobile WebApp, die einen Sextanten als Messinstrument simuliert. Die App be
 - Messprotokoll mit Ort, Zeit, Zielhoehe und Zielazimut speichern
 
 Der Almanach ist fuer den Simulator gedacht und ersetzt keinen amtlichen Nautical Almanac.
+
+## MVP 3
+
+- genauere Sonnenposition mit scheinbarer Ekliptiklaenge und wahrer Schiefe berechnen
+- Mondposition mit zusaetzlichen Stoerungstermen und topozentrischer Parallaxe verbessern
+- scheinbare Hoehen inklusive atmosphaerischer Refraktion fuer die Anzeige verwenden
+- Sextantenansicht bei vertikaler Blickaenderung ueber der Realansicht mitbewegen
+- Beobachterhoehe mit Kimmtiefe in Darstellung und Messprotokoll beruecksichtigen
 
 ## GitHub Pages
 

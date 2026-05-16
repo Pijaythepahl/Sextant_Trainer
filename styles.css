@@ -53,6 +53,7 @@ button:active {
 }
 
 .instrument,
+.target-picker,
 .almanac,
 .controls,
 .logbook {
@@ -136,7 +137,6 @@ h2 {
       #34453a calc(var(--world-horizon-y) + 3px),
       #12201d 100%
     );
-  touch-action: none;
 }
 
 .azimuth-scale {
@@ -197,45 +197,88 @@ h2 {
   pointer-events: none;
 }
 
-.sky-object.is-selected {
-  width: 34px;
-  margin: -17px 0 0 -17px;
+.sky-object.is-sun,
+.scope-object.is-sun {
   background: var(--accent);
-  box-shadow: 0 0 18px rgba(245, 200, 75, 0.9), 0 0 48px rgba(245, 200, 75, 0.34);
-  opacity: 0.84;
+  box-shadow: 0 0 18px rgba(245, 200, 75, 0.82), 0 0 42px rgba(245, 200, 75, 0.28);
 }
 
-.sky-object.is-moon,
-.sky-object.is-selected.is-moon,
-.scope-sun.is-moon {
+.sky-object.is-sun {
+  width: 28px;
+  margin: -14px 0 0 -14px;
+}
+
+.sky-object.is-moon {
   background: #d8d2bf;
   box-shadow: 0 0 16px rgba(216, 210, 191, 0.55);
 }
 
-.sky-object.is-planet,
-.sky-object.is-selected.is-planet,
-.scope-sun.is-planet {
+.sky-object.is-moon {
+  width: 24px;
+  margin: -12px 0 0 -12px;
+}
+
+.sky-object.is-planet {
+  width: 10px;
+  margin: -5px 0 0 -5px;
   background: #e6c59a;
 }
 
-.sky-object.is-star,
-.sky-object.is-selected.is-star,
-.scope-sun.is-star {
-  width: 8px;
-  margin: -4px 0 0 -4px;
+.sky-object.is-star {
+  width: 7px;
+  margin: -3.5px 0 0 -3.5px;
   background: #eef6ff;
   box-shadow: 0 0 12px rgba(238, 246, 255, 0.7);
+}
+
+.sky-label {
+  position: absolute;
+  width: max-content;
+  max-width: 112px;
+  margin: -35px 0 0 16px;
+  padding: 2px 5px;
+  border: 1px solid rgba(244, 241, 232, 0.28);
+  border-radius: 4px;
+  background: rgba(12, 22, 24, 0.72);
+  color: var(--text);
+  font-size: 0.66rem;
+  line-height: 1.1;
+  pointer-events: none;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.82);
+  z-index: 4;
+}
+
+.sky-label-text {
+  display: block;
+  max-width: 102px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sky-label::before {
+  content: "";
+  position: absolute;
+  right: 100%;
+  top: calc(100% + 1px);
+  width: 22px;
+  height: 1px;
+  background: rgba(244, 241, 232, 0.62);
+  transform: rotate(-42deg);
+  transform-origin: right center;
 }
 
 .scope {
   position: absolute;
   left: 50%;
-  top: 50%;
+  top: var(--scope-y, 50%);
   width: clamp(158px, 38vw, 220px);
   aspect-ratio: 1;
   --scope-horizon-y: 50%;
+  --scope-y: 50%;
   transform: translate(-50%, -50%);
   overflow: hidden;
+  z-index: 5;
   border: 5px solid rgba(20, 26, 27, 0.92);
   border-radius: 50%;
   background: linear-gradient(to bottom, #244659 0%, #5f8997 54%, #244d58 100%);
@@ -301,48 +344,46 @@ h2 {
   z-index: 2;
 }
 
-.scope-sun {
-  width: 46px;
-  margin: -23px 0 0 -23px;
+.scope-objects {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
   z-index: 3;
 }
 
-.scope-sun.is-sun,
-.scope-sun.is-moon {
-  width: 46px;
-  margin: -23px 0 0 -23px;
+.scope-object {
+  position: absolute;
+  width: 7px;
+  aspect-ratio: 1;
+  margin: -3.5px 0 0 -3.5px;
+  border-radius: 50%;
+  background: #eef6ff;
+  box-shadow: 0 0 10px rgba(238, 246, 255, 0.72);
 }
 
-.scope-sun.is-planet {
-  width: 10px;
-  margin: -5px 0 0 -5px;
+.scope-object.is-planet {
+  width: 9px;
+  margin: -4.5px 0 0 -4.5px;
+  background: #e6c59a;
 }
 
-.scope-sun.is-star {
-  width: 5px;
-  margin: -2.5px 0 0 -2.5px;
+.scope-object.is-sun {
+  width: 24px;
+  margin: -12px 0 0 -12px;
+  background: var(--accent);
+  box-shadow: 0 0 14px rgba(245, 200, 75, 0.78);
 }
 
-.scope-sun.is-sun {
-  box-shadow:
-    0 0 5px rgba(245, 200, 75, 0.95),
-    0 0 18px rgba(245, 200, 75, 0.48);
+.scope-object.is-moon {
+  width: 20px;
+  margin: -10px 0 0 -10px;
+  background: #d8d2bf;
+  box-shadow: 0 0 12px rgba(216, 210, 191, 0.58);
 }
 
-.scope-sun.is-moon {
-  box-shadow:
-    0 0 5px rgba(216, 210, 191, 0.9),
-    0 0 15px rgba(216, 210, 191, 0.42);
-}
-
-.direct-sun {
-  opacity: 0.92;
-}
-
-.mirror-sun {
-  border: 1px solid rgba(255, 255, 255, 0.8);
-  opacity: 0.66;
-  filter: saturate(0.9);
+.scope-label {
+  max-width: 92px;
+  font-size: 0.58rem;
 }
 
 .scope-divider {
@@ -354,6 +395,7 @@ h2 {
   transform: translateX(-50%);
   background: rgba(244, 241, 232, 0.58);
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.45);
+  z-index: 6;
 }
 
 .reticle {
@@ -365,6 +407,7 @@ h2 {
   transform: translate(-50%, -50%);
   border: 1px solid rgba(255, 255, 255, 0.36);
   border-radius: 50%;
+  z-index: 6;
 }
 
 .reticle::before,
@@ -399,10 +442,24 @@ h2 {
   font-variant-numeric: tabular-nums;
 }
 
+.target-picker,
 .controls,
 .almanac,
 .logbook {
   margin-top: 12px;
+}
+
+.target-picker {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: end;
+  gap: 12px;
+  padding: 14px;
+}
+
+.target-picker label {
+  color: var(--muted);
+  font-size: 0.84rem;
 }
 
 .control-group {
@@ -475,8 +532,7 @@ select {
   grid-column: 1 / -1;
 }
 
-.coordinate-grid label,
-.almanac-actions label {
+.coordinate-grid label {
   color: var(--muted);
   font-size: 0.84rem;
 }
@@ -485,13 +541,18 @@ select {
   flex: 1;
 }
 
-.almanac-actions {
-  margin-top: 12px;
+.almanac-content {
+  display: block;
 }
 
-.almanac-result {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+.almanac.is-collapsed .almanac-content {
+  display: none;
+}
+
+.almanac-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 12px;
 }
 
 .inline-input {
@@ -569,7 +630,7 @@ select {
     grid-template-columns: minmax(72px, 1fr) minmax(92px, 1fr) minmax(64px, 0.8fr);
   }
 
-  .almanac-result {
+  .target-picker {
     grid-template-columns: 1fr;
   }
 }
