@@ -48,24 +48,64 @@ const state = {
 };
 
 const NAV_STARS = [
-  { name: "Sirius", ra: 6.7525, dec: -16.7161 },
-  { name: "Canopus", ra: 6.3992, dec: -52.6957 },
-  { name: "Arcturus", ra: 14.261, dec: 19.1825 },
-  { name: "Vega", ra: 18.6156, dec: 38.7837 },
-  { name: "Capella", ra: 5.2782, dec: 45.998 },
-  { name: "Rigel", ra: 5.2423, dec: -8.2016 },
-  { name: "Procyon", ra: 7.655, dec: 5.225 },
+  { name: "Alpheratz", ra: 0.1398, dec: 29.0904 },
+  { name: "Ankaa", ra: 0.4381, dec: -42.306 },
+  { name: "Schedar", ra: 0.6751, dec: 56.5373 },
+  { name: "Diphda", ra: 0.7265, dec: -17.9866 },
   { name: "Achernar", ra: 1.6286, dec: -57.2367 },
-  { name: "Betelgeuse", ra: 5.9195, dec: 7.4071 },
-  { name: "Altair", ra: 19.8464, dec: 8.8683 },
-  { name: "Aldebaran", ra: 4.5987, dec: 16.5093 },
-  { name: "Antares", ra: 16.4901, dec: -26.432 },
-  { name: "Spica", ra: 13.4199, dec: -11.1614 },
-  { name: "Pollux", ra: 7.7553, dec: 28.0262 },
-  { name: "Fomalhaut", ra: 22.9608, dec: -29.6222 },
-  { name: "Deneb", ra: 20.6905, dec: 45.2803 },
-  { name: "Regulus", ra: 10.1395, dec: 11.9672 },
+  { name: "Polaris", ra: 2.5303, dec: 89.2641 },
   { name: "Hamal", ra: 2.1196, dec: 23.4624 },
+  { name: "Acamar", ra: 2.971, dec: -40.3047 },
+  { name: "Menkar", ra: 3.0379, dec: 4.0897 },
+  { name: "Mirfak", ra: 3.4054, dec: 49.8612 },
+  { name: "Aldebaran", ra: 4.5987, dec: 16.5093 },
+  { name: "Rigel", ra: 5.2423, dec: -8.2016 },
+  { name: "Capella", ra: 5.2782, dec: 45.998 },
+  { name: "Bellatrix", ra: 5.4189, dec: 6.3497 },
+  { name: "Elnath", ra: 5.4382, dec: 28.6075 },
+  { name: "Alnilam", ra: 5.6036, dec: -1.2019 },
+  { name: "Betelgeuse", ra: 5.9195, dec: 7.4071 },
+  { name: "Canopus", ra: 6.3992, dec: -52.6957 },
+  { name: "Sirius", ra: 6.7525, dec: -16.7161 },
+  { name: "Adhara", ra: 6.9771, dec: -28.9721 },
+  { name: "Procyon", ra: 7.655, dec: 5.225 },
+  { name: "Pollux", ra: 7.7553, dec: 28.0262 },
+  { name: "Avior", ra: 8.3752, dec: -59.5095 },
+  { name: "Suhail", ra: 9.1333, dec: -43.4326 },
+  { name: "Miaplacidus", ra: 9.22, dec: -69.7172 },
+  { name: "Alphard", ra: 9.4598, dec: -8.6586 },
+  { name: "Regulus", ra: 10.1395, dec: 11.9672 },
+  { name: "Dubhe", ra: 11.0621, dec: 61.7508 },
+  { name: "Denebola", ra: 11.8177, dec: 14.5721 },
+  { name: "Gienah", ra: 12.2634, dec: -17.5419 },
+  { name: "Acrux", ra: 12.4433, dec: -63.0991 },
+  { name: "Gacrux", ra: 12.5194, dec: -57.1132 },
+  { name: "Alioth", ra: 12.9005, dec: 55.9598 },
+  { name: "Spica", ra: 13.4199, dec: -11.1614 },
+  { name: "Alkaid", ra: 13.7923, dec: 49.3133 },
+  { name: "Hadar", ra: 14.0637, dec: -60.373 },
+  { name: "Menkent", ra: 14.1114, dec: -36.37 },
+  { name: "Arcturus", ra: 14.261, dec: 19.1825 },
+  { name: "Rigil Kentaurus", ra: 14.6608, dec: -60.8351 },
+  { name: "Zubenelgenubi", ra: 14.8448, dec: -15.997 },
+  { name: "Kochab", ra: 14.8451, dec: 74.1555 },
+  { name: "Alphecca", ra: 15.5781, dec: 26.7147 },
+  { name: "Antares", ra: 16.4901, dec: -26.432 },
+  { name: "Atria", ra: 16.8111, dec: -69.0277 },
+  { name: "Sabik", ra: 17.1729, dec: -15.7249 },
+  { name: "Shaula", ra: 17.5601, dec: -37.1038 },
+  { name: "Rasalhague", ra: 17.5822, dec: 12.56 },
+  { name: "Eltanin", ra: 17.9434, dec: 51.4889 },
+  { name: "Kaus Australis", ra: 18.4029, dec: -34.3846 },
+  { name: "Vega", ra: 18.6156, dec: 38.7837 },
+  { name: "Nunki", ra: 18.9211, dec: -26.2967 },
+  { name: "Altair", ra: 19.8464, dec: 8.8683 },
+  { name: "Peacock", ra: 20.4275, dec: -56.7351 },
+  { name: "Deneb", ra: 20.6905, dec: 45.2803 },
+  { name: "Enif", ra: 21.7364, dec: 9.875 },
+  { name: "Al Na'ir", ra: 22.1372, dec: -46.9609 },
+  { name: "Fomalhaut", ra: 22.9608, dec: -29.6222 },
+  { name: "Markab", ra: 23.0793, dec: 15.2053 },
 ];
 
 const PLANET_ELEMENTS = {
@@ -473,7 +513,7 @@ function getPlanetHeliocentric(name, d) {
   };
 }
 
-function getEarthHeliocentric(d) {
+function getSunGeocentricEcliptic(d) {
   const w = normalizeDegrees(282.9404 + 4.70935e-5 * d);
   const e = 0.016709 - 1.151e-9 * d;
   const M = normalizeDegrees(356.047 + 0.9856002585 * d);
@@ -492,11 +532,11 @@ function getEarthHeliocentric(d) {
 
 function getPlanetEquatorial(name, jd) {
   const d = jd - 2451543.5;
-  const earth = getEarthHeliocentric(d);
+  const sun = getSunGeocentricEcliptic(d);
   const planet = getPlanetHeliocentric(name, d);
-  const x = planet.x - earth.x;
-  const y = planet.y - earth.y;
-  const z = planet.z - earth.z;
+  const x = planet.x + sun.x;
+  const y = planet.y + sun.y;
+  const z = planet.z + sun.z;
   const lambda = atan2Deg(y, x);
   const beta = atan2Deg(z, Math.sqrt(x * x + y * y));
 
