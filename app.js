@@ -200,6 +200,10 @@ function getOpticalSextantAngle() {
   return getSextantAngle() + state.indexErrorMinutes / 60;
 }
 
+function getIndexErrorAngle() {
+  return state.indexErrorMinutes / 60;
+}
+
 function getDipCorrectionDegrees() {
   return (1.76 * Math.sqrt(Math.max(state.observerHeightMeters, 0))) / 60;
 }
@@ -852,9 +856,10 @@ function renderScopeObjects(sextantAngle) {
 function render() {
   const sextantAngle = getSextantAngle();
   const opticalSextantAngle = getOpticalSextantAngle();
+  const indexErrorAngle = getIndexErrorAngle();
   const visibleHorizonAltitude = -getDipCorrectionDegrees();
   const directScopeHorizonPosition = getScopePosition(state.viewAzimuth, visibleHorizonAltitude);
-  const mirrorScopeHorizonPosition = getScopePosition(state.viewAzimuth, visibleHorizonAltitude - opticalSextantAngle);
+  const mirrorScopeHorizonPosition = getScopePosition(state.viewAzimuth, visibleHorizonAltitude - indexErrorAngle);
   const worldHorizonPosition = getWorldHorizonPosition(state.viewAzimuth, visibleHorizonAltitude);
 
   renderWorldObjects();

@@ -1,5 +1,7 @@
 # Handsextant MVP
 
+Version 0.41
+
 Eine mobile WebApp, die einen Sextanten als Messinstrument simuliert. Die App berechnet keine Position und nutzt im ersten MVP keine Handy-Sensoren.
 
 ## MVP 1
