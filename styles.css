@@ -513,6 +513,7 @@ input[type="number"],
 input[type="datetime-local"],
 select {
   width: 100%;
+  max-width: 100%;
   min-height: 42px;
   margin-top: 6px;
   border: 1px solid var(--line);
@@ -520,6 +521,11 @@ select {
   background: #10191b;
   color: var(--text);
   padding: 8px 10px;
+}
+
+#utcTime {
+  display: block;
+  font-variant-numeric: tabular-nums;
 }
 
 .coordinate-grid {

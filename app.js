@@ -236,11 +236,12 @@ function toDateTimeLocalValue(date) {
     String(date.getUTCMinutes()).padStart(2, "0"),
     String(date.getUTCSeconds()).padStart(2, "0"),
   ];
-  return `${parts.join("-")}T${time.join(":")}`;
+  return `${parts.join("-")} ${time.join(":")}`;
 }
 
 function getAlmanacDate() {
-  const date = new Date(`${elements.utcTime.value}Z`);
+  const normalizedValue = elements.utcTime.value.trim().replace(" ", "T");
+  const date = new Date(`${normalizedValue}Z`);
   return Number.isNaN(date.getTime()) ? new Date() : date;
 }
 
@@ -252,7 +253,7 @@ function setUtcTime(date) {
 
 function getSignedCoordinate(degreesElement, minutesElement, hemisphereElement, negativeHemisphere, maxDegrees) {
   const degrees = clamp(Math.abs(Number(degreesElement.value || 0)), 0, maxDegrees);
-  const minutes = clamp(Math.abs(Number(minutesElement.value || 0)), 0, 59.999);
+  const minutes = clamp(Math.abs(Number(minutesElement.value || 0)), 0, 59.9);
   const sign = hemisphereElement.value === negativeHemisphere ? -1 : 1;
 
   return sign * (degrees + minutes / 60);
@@ -266,7 +267,7 @@ function getObserverPosition() {
 }
 
 function formatCoordinate(degrees, minutes, hemisphere) {
-  return `${Math.round(degrees)} deg ${Number(minutes).toFixed(3)}' ${hemisphere}`;
+  return `${Math.round(degrees)} deg ${Number(minutes).toFixed(1)}' ${hemisphere}`;
 }
 
 function setCoordinateFields(value, degreesElement, minutesElement, hemisphereElement, positiveHemisphere, negativeHemisphere) {
@@ -274,13 +275,13 @@ function setCoordinateFields(value, degreesElement, minutesElement, hemisphereEl
   let degrees = Math.floor(absolute);
   let minutes = (absolute - degrees) * 60;
 
-  if (minutes >= 59.9995) {
+  if (minutes >= 59.95) {
     degrees += 1;
     minutes = 0;
   }
 
   degreesElement.value = String(degrees);
-  minutesElement.value = minutes.toFixed(3);
+  minutesElement.value = minutes.toFixed(1);
   hemisphereElement.value = value < 0 ? negativeHemisphere : positiveHemisphere;
 }
 
@@ -630,7 +631,20 @@ function setLocationStatus(message) {
   elements.locationStatus.textContent = message;
 }
 
+function isSecureLocationContext() {
+  return typeof window === "undefined" || window.isSecureContext;
+}
+
+function getLocationDeniedMessage() {
+  return "Standortzugriff wurde verweigert.";
+}
+
 function useCurrentLocation() {
+  if (!isSecureLocationContext()) {
+    setLocationStatus("Standort braucht HTTPS. Bitte ueber GitHub Pages oeffnen, nicht als Datei.");
+    return;
+  }
+
   if (!navigator.geolocation) {
     setLocationStatus("Standort nicht verfuegbar.");
     return;
@@ -648,7 +662,7 @@ function useCurrentLocation() {
     },
     (error) => {
       const messages = {
-        1: "Standortzugriff wurde abgelehnt.",
+        1: getLocationDeniedMessage(),
         2: "Standort konnte nicht bestimmt werden.",
         3: "Standortsuche hat zu lange gedauert.",
       };

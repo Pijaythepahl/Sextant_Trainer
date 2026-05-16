@@ -1,6 +1,6 @@
 # Handsextant MVP
 
-Version 0.41
+Version 0.42
 
 Eine mobile WebApp, die einen Sextanten als Messinstrument simuliert. Die App berechnet keine Position und nutzt im ersten MVP keine Handy-Sensoren.
 
@@ -48,5 +48,7 @@ Die App besteht nur aus statischen Dateien:
 - `index.html`
 - `styles.css`
 - `app.js`
+
+Hinweis: Die Standortuebernahme per Browser funktioniert auf iPadOS nur in einem sicheren Kontext, also zum Beispiel ueber GitHub Pages mit HTTPS. Wenn auf GitHub Pages trotzdem keine Nachfrage erscheint, ist Standortzugriff meist global oder fuer Safari-Websites deaktiviert. Pruefe auf dem iPad die Ortungsdienste und die Safari-Website-Einstellung fuer Standort.
 
 Damit kann sie direkt aus einem GitHub-Repository per GitHub Pages veröffentlicht werden. Als Pages-Quelle reicht der Branch mit diesen Dateien im Root-Verzeichnis.
