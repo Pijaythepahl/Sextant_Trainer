@@ -31,6 +31,18 @@ const MOTION_CONTROL = {
   verticalSensitivity: 1.6,
   neutralAltitude: 0,
 };
+const TOUCH_CONTROLS = {
+  indexAngle: {
+    min: 0,
+    max: 90,
+    step: 0.1,
+  },
+  micrometerMinutes: {
+    min: -30,
+    max: 30,
+    step: 0.1,
+  },
+};
 
 const state = {
   targetAzimuth: 126,
@@ -183,6 +195,14 @@ const elements = {
   useManualControl: document.querySelector("#useManualControl"),
   enableMotionControl: document.querySelector("#enableMotionControl"),
   calibrateMotion: document.querySelector("#calibrateMotion"),
+  indexTouchControl: document.querySelector("#indexTouchControl"),
+  indexTouchReadout: document.querySelector("#indexTouchReadout"),
+  indexTouchFill: document.querySelector("#indexTouchFill"),
+  indexTouchThumb: document.querySelector("#indexTouchThumb"),
+  micrometerTouchControl: document.querySelector("#micrometerTouchControl"),
+  micrometerTouchReadout: document.querySelector("#micrometerTouchReadout"),
+  micrometerTouchFill: document.querySelector("#micrometerTouchFill"),
+  micrometerTouchThumb: document.querySelector("#micrometerTouchThumb"),
   indexAngle: document.querySelector("#indexAngle"),
   micrometerMinutes: document.querySelector("#micrometerMinutes"),
   micrometerReadout: document.querySelector("#micrometerReadout"),
@@ -279,9 +299,129 @@ function formatViewAltitude(angle) {
   return `${Number(angle).toFixed(1)} deg`;
 }
 
+function formatIndexAngle(angle) {
+  return `${Number(angle).toFixed(1).padStart(4, "0")} deg`;
+}
+
 function syncViewInputs() {
   elements.azimuth.value = String(Math.round(state.viewAzimuth));
   elements.altitude.value = String(Number(state.viewAltitude).toFixed(1));
+}
+
+function roundToStep(value, step) {
+  return Math.round(value / step) * step;
+}
+
+function setSextantControls(indexAngle, micrometerMinutes) {
+  state.indexAngle = clamp(indexAngle, TOUCH_CONTROLS.indexAngle.min, TOUCH_CONTROLS.indexAngle.max);
+  state.micrometerMinutes = clamp(micrometerMinutes, TOUCH_CONTROLS.micrometerMinutes.min, TOUCH_CONTROLS.micrometerMinutes.max);
+  elements.indexAngle.value = String(state.indexAngle);
+  elements.micrometerMinutes.value = String(state.micrometerMinutes);
+  render();
+}
+
+function syncTouchControl(element, fillElement, thumbElement, value, config, readout, formatter) {
+  const ratio = (value - config.min) / (config.max - config.min);
+  const percent = clamp(ratio * 100, 0, 100);
+  element.setAttribute("aria-valuenow", String(Number(value).toFixed(1)));
+  element.setAttribute("aria-valuetext", formatter(value));
+  readout.textContent = formatter(value);
+  fillElement.style.height = `${percent}%`;
+  thumbElement.style.bottom = `${percent}%`;
+}
+
+function syncTouchControls() {
+  syncTouchControl(
+    elements.indexTouchControl,
+    elements.indexTouchFill,
+    elements.indexTouchThumb,
+    state.indexAngle,
+    TOUCH_CONTROLS.indexAngle,
+    elements.indexTouchReadout,
+    formatIndexAngle,
+  );
+  syncTouchControl(
+    elements.micrometerTouchControl,
+    elements.micrometerTouchFill,
+    elements.micrometerTouchThumb,
+    state.micrometerMinutes,
+    TOUCH_CONTROLS.micrometerMinutes,
+    elements.micrometerTouchReadout,
+    formatSignedMinutes,
+  );
+}
+
+function setTouchControlValue(controlName, value) {
+  const config = TOUCH_CONTROLS[controlName];
+  const nextValue = clamp(roundToStep(value, config.step), config.min, config.max);
+
+  if (controlName === "indexAngle") {
+    setSextantControls(nextValue, state.micrometerMinutes);
+  } else {
+    setSextantControls(state.indexAngle, nextValue);
+  }
+}
+
+function getTouchControlValueFromPointer(controlElement, clientY, config) {
+  const rect = controlElement.getBoundingClientRect();
+  const ratio = clamp((rect.bottom - clientY) / rect.height, 0, 1);
+  return config.min + ratio * (config.max - config.min);
+}
+
+function setupTouchControl(controlElement, controlName) {
+  const config = TOUCH_CONTROLS[controlName];
+
+  function updateFromPointer(event) {
+    setTouchControlValue(controlName, getTouchControlValueFromPointer(controlElement, event.clientY, config));
+  }
+
+  controlElement.addEventListener("pointerdown", (event) => {
+    event.preventDefault();
+    controlElement.setPointerCapture(event.pointerId);
+    controlElement.classList.add("is-dragging");
+    updateFromPointer(event);
+  });
+
+  controlElement.addEventListener("pointermove", (event) => {
+    if (!controlElement.hasPointerCapture(event.pointerId)) {
+      return;
+    }
+
+    updateFromPointer(event);
+  });
+
+  ["pointerup", "pointercancel"].forEach((eventName) => {
+    controlElement.addEventListener(eventName, (event) => {
+      if (controlElement.hasPointerCapture(event.pointerId)) {
+        controlElement.releasePointerCapture(event.pointerId);
+      }
+
+      controlElement.classList.remove("is-dragging");
+    });
+  });
+
+  controlElement.addEventListener("keydown", (event) => {
+    const currentValue = controlName === "indexAngle" ? state.indexAngle : state.micrometerMinutes;
+    const largeStep = controlName === "indexAngle" ? 1 : 1;
+    const smallStep = config.step;
+    const keySteps = {
+      ArrowUp: smallStep,
+      ArrowRight: smallStep,
+      ArrowDown: -smallStep,
+      ArrowLeft: -smallStep,
+      PageUp: largeStep,
+      PageDown: -largeStep,
+      Home: config.min - currentValue,
+      End: config.max - currentValue,
+    };
+
+    if (!(event.key in keySteps)) {
+      return;
+    }
+
+    event.preventDefault();
+    setTouchControlValue(controlName, currentValue + keySteps[event.key]);
+  });
 }
 
 function setMotionStatus(message) {
@@ -378,6 +518,7 @@ function isMotionControlSupported() {
 
 function updateControlModeUi() {
   const isMotion = state.controlMode === "motion";
+  document.body.classList.toggle("is-motion-control", isMotion);
   elements.controlModeLabel.textContent = isMotion ? "Bewegung" : "Manuell";
   elements.useManualControl.classList.toggle("is-active", !isMotion);
   elements.enableMotionControl.classList.toggle("is-active", isMotion);
@@ -1195,6 +1336,7 @@ function render() {
   renderBelowHorizon(elements.mirrorBelowHorizon, mirrorScopeHorizonPosition);
 
   elements.micrometerReadout.textContent = formatSignedMinutes(state.micrometerMinutes);
+  syncTouchControls();
   elements.viewReadout.textContent = `Az ${String(Math.round(state.viewAzimuth)).padStart(3, "0")} deg / Alt ${formatViewAltitude(state.viewAltitude)}`;
   elements.targetLabel.textContent = "Hs";
   elements.sextantReading.textContent = formatAngle(sextantAngle);
@@ -1236,8 +1378,12 @@ function saveMeasurement() {
 function updateFromInputs() {
   state.viewAzimuth = Number(elements.azimuth.value);
   state.viewAltitude = Number(elements.altitude.value);
-  state.indexAngle = Number(elements.indexAngle.value);
-  state.micrometerMinutes = Number(elements.micrometerMinutes.value);
+  state.indexAngle = clamp(Number(elements.indexAngle.value), TOUCH_CONTROLS.indexAngle.min, TOUCH_CONTROLS.indexAngle.max);
+  state.micrometerMinutes = clamp(
+    Number(elements.micrometerMinutes.value),
+    TOUCH_CONTROLS.micrometerMinutes.min,
+    TOUCH_CONTROLS.micrometerMinutes.max,
+  );
   state.indexErrorMinutes = Number(elements.indexError.value || 0);
   state.observerHeightMeters = Number(elements.observerHeight.value || 0);
   render();
@@ -1289,6 +1435,8 @@ elements.toggleAlmanac.addEventListener("click", toggleAlmanac);
 elements.useManualControl.addEventListener("click", switchToManualControl);
 elements.enableMotionControl.addEventListener("click", enableMotionControl);
 elements.calibrateMotion.addEventListener("click", calibrateMotionControl);
+setupTouchControl(elements.indexTouchControl, "indexAngle");
+setupTouchControl(elements.micrometerTouchControl, "micrometerMinutes");
 elements.saveMeasurement.addEventListener("click", saveMeasurement);
 elements.clearLog.addEventListener("click", () => {
   state.measurements = [];

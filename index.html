@@ -11,7 +11,7 @@
       <section class="instrument" aria-label="Sextanten-Simulator">
         <header class="topbar">
           <div>
-            <p class="eyebrow">Version 0.5</p>
+            <p class="eyebrow">Version 0.51</p>
             <h1>Sextant Simulation</h1>
           </div>
         </header>
@@ -33,6 +33,48 @@
             </div>
             <div class="scope-divider" aria-hidden="true"></div>
             <div class="reticle" aria-hidden="true"></div>
+          </div>
+        </div>
+
+        <div class="instrument-adjusters" aria-label="Sextantenbedienung">
+          <div
+            class="touch-adjuster touch-adjuster-primary"
+            id="indexTouchControl"
+            role="slider"
+            tabindex="0"
+            aria-label="Alhidade"
+            aria-valuemin="0"
+            aria-valuemax="90"
+            aria-valuenow="0"
+          >
+            <div class="touch-adjuster-header">
+              <span>Alhidade</span>
+              <strong id="indexTouchReadout">00.0 deg</strong>
+            </div>
+            <div class="touch-track" aria-hidden="true">
+              <div class="touch-fill" id="indexTouchFill"></div>
+              <div class="touch-thumb" id="indexTouchThumb"></div>
+            </div>
+          </div>
+
+          <div
+            class="touch-adjuster touch-adjuster-fine"
+            id="micrometerTouchControl"
+            role="slider"
+            tabindex="0"
+            aria-label="Mikrometer-Trommel"
+            aria-valuemin="-30"
+            aria-valuemax="30"
+            aria-valuenow="0"
+          >
+            <div class="touch-adjuster-header">
+              <span>Mikrometer</span>
+              <strong id="micrometerTouchReadout">+0.0'</strong>
+            </div>
+            <div class="touch-track" aria-hidden="true">
+              <div class="touch-fill" id="micrometerTouchFill"></div>
+              <div class="touch-thumb" id="micrometerTouchThumb"></div>
+            </div>
           </div>
         </div>
 
@@ -70,12 +112,12 @@
           </div>
         </div>
 
-        <div class="control-group">
+        <div class="control-group view-control">
           <label for="azimuth">Blick horizontal</label>
           <input id="azimuth" type="range" min="0" max="359" value="92">
         </div>
 
-        <div class="control-group">
+        <div class="control-group view-control">
           <label for="altitude">Blick vertikal</label>
           <input id="altitude" type="range" min="-10" max="80" step="0.5" value="18">
         </div>

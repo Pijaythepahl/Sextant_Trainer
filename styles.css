@@ -447,6 +447,103 @@ h2 {
   background: var(--panel-strong);
 }
 
+.instrument-adjusters {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  padding: 14px;
+  background: #11191b;
+  border-bottom: 1px solid var(--line);
+}
+
+.touch-adjuster {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: 12px;
+  min-height: 196px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #162124;
+  padding: 12px;
+  touch-action: none;
+  user-select: none;
+  outline: none;
+}
+
+.touch-adjuster:focus-visible,
+.touch-adjuster.is-dragging {
+  border-color: rgba(245, 200, 75, 0.72);
+  box-shadow: 0 0 0 2px rgba(245, 200, 75, 0.18);
+}
+
+.touch-adjuster-primary {
+  background: #132529;
+}
+
+.touch-adjuster-fine {
+  background: #1e261d;
+}
+
+.touch-adjuster-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.touch-adjuster-header span {
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+.touch-adjuster-header strong {
+  font-size: 1rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.touch-track {
+  position: relative;
+  min-height: 132px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+  overflow: hidden;
+  background:
+    linear-gradient(to top, rgba(255, 255, 255, 0.08) 1px, transparent 1px),
+    #0c1416;
+  background-size: 100% 25%;
+}
+
+.touch-fill {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 0%;
+  background: linear-gradient(to top, rgba(116, 199, 211, 0.32), rgba(245, 200, 75, 0.26));
+}
+
+.touch-thumb {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: 0%;
+  height: 32px;
+  border: 1px solid rgba(244, 241, 232, 0.72);
+  border-radius: 8px;
+  background: #f4f1e8;
+  transform: translateY(50%);
+  box-shadow: 0 7px 18px rgba(0, 0, 0, 0.36);
+}
+
+.touch-adjuster-fine .touch-fill {
+  background: linear-gradient(to top, rgba(245, 200, 75, 0.34), rgba(116, 199, 211, 0.2));
+}
+
+.is-motion-control .view-control {
+  display: none;
+}
+
 .status-strip strong {
   display: block;
   margin-top: 2px;
@@ -719,6 +816,26 @@ select {
     width: clamp(168px, 58vw, 238px);
   }
 
+  .instrument-adjusters {
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .touch-adjuster {
+    min-height: 178px;
+    padding: 10px;
+  }
+
+  .touch-adjuster-header {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .touch-track {
+    min-height: 124px;
+  }
+
   .status-strip {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -777,6 +894,18 @@ select {
 
   .scope {
     width: clamp(210px, 24vw, 310px);
+  }
+
+  .instrument-adjusters {
+    padding: 16px;
+  }
+
+  .touch-adjuster {
+    min-height: 220px;
+  }
+
+  .touch-track {
+    min-height: 154px;
   }
 }
 
