@@ -29,6 +29,7 @@ const LIMB_OFFSETS = {
 const MOTION_CONTROL = {
   horizontalSensitivity: 0.9,
   verticalSensitivity: 1.6,
+  neutralAltitude: 0,
 };
 
 const state = {
@@ -299,7 +300,7 @@ function getMotionHeading(event) {
     return normalizeDegrees(event.webkitCompassHeading);
   }
 
-  if (typeof event.alpha === "number") {
+  if (event.absolute === true && typeof event.alpha === "number") {
     return normalizeDegrees(360 - event.alpha);
   }
 
@@ -318,7 +319,7 @@ function getOrientationSample(event) {
   const heading = getMotionHeading(event);
   const pitch = getMotionPitch(event);
 
-  if (heading === null || pitch === null) {
+  if (pitch === null) {
     return null;
   }
 
@@ -351,16 +352,21 @@ function calibrateMotionControl() {
     return;
   }
 
+  const heading = state.motionLastOrientation.heading;
+  const viewAzimuth = heading === null ? state.viewAzimuth : heading;
+  const headingStatus = heading === null ? " Kompass nicht verfuegbar." : " Kompassheading uebernommen.";
+  setViewDirection(viewAzimuth, MOTION_CONTROL.neutralAltitude);
+
   state.motionCalibration = {
-    heading: state.motionLastOrientation.heading,
+    heading,
     pitch: state.motionLastOrientation.pitch,
-    viewAzimuth: state.viewAzimuth,
-    viewAltitude: state.viewAltitude,
+    viewAzimuth,
+    viewAltitude: MOTION_CONTROL.neutralAltitude,
   };
-  state.motionTargetAzimuth = state.viewAzimuth;
-  state.motionTargetAltitude = state.viewAltitude;
+  state.motionTargetAzimuth = viewAzimuth;
+  state.motionTargetAltitude = MOTION_CONTROL.neutralAltitude;
   state.motionCalibrated = true;
-  setMotionStatus("Nullpunkt gesetzt. iPhone oder iPad sanft bewegen.");
+  setMotionStatus(`Nullpunkt gesetzt.${headingStatus}`);
   updateControlModeUi();
 }
 
@@ -373,7 +379,10 @@ function applyMotionSample(sample) {
     return;
   }
 
-  const headingDelta = shortestAngleDelta(state.motionCalibration.heading, sample.heading);
+  const headingDelta =
+    state.motionCalibration.heading === null || sample.heading === null
+      ? 0
+      : shortestAngleDelta(state.motionCalibration.heading, sample.heading);
   const pitchDelta = sample.pitch - state.motionCalibration.pitch;
   state.motionTargetAzimuth = normalizeDegrees(state.motionCalibration.viewAzimuth + headingDelta * MOTION_CONTROL.horizontalSensitivity);
   state.motionTargetAltitude = clamp(
