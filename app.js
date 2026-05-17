@@ -45,6 +45,15 @@ const state = {
   updatingTimeInput: false,
   measurements: [],
   bodies: [],
+  controlMode: "manual",
+  motionAvailable: false,
+  motionActive: false,
+  motionCalibrated: false,
+  motionLastOrientation: null,
+  motionCalibration: null,
+  motionTargetAzimuth: 92,
+  motionTargetAltitude: 18,
+  motionAnimationFrame: null,
 };
 
 const NAV_STARS = [
@@ -164,6 +173,11 @@ const elements = {
   mirrorHorizon: document.querySelector("#mirrorHorizon"),
   azimuth: document.querySelector("#azimuth"),
   altitude: document.querySelector("#altitude"),
+  controlModeLabel: document.querySelector("#controlModeLabel"),
+  motionStatus: document.querySelector("#motionStatus"),
+  useManualControl: document.querySelector("#useManualControl"),
+  enableMotionControl: document.querySelector("#enableMotionControl"),
+  calibrateMotion: document.querySelector("#calibrateMotion"),
   indexAngle: document.querySelector("#indexAngle"),
   micrometerMinutes: document.querySelector("#micrometerMinutes"),
   micrometerReadout: document.querySelector("#micrometerReadout"),
@@ -258,6 +272,196 @@ function formatShortAngle(angle) {
 
 function formatViewAltitude(angle) {
   return `${Number(angle).toFixed(1)} deg`;
+}
+
+function syncViewInputs() {
+  elements.azimuth.value = String(Math.round(state.viewAzimuth));
+  elements.altitude.value = String(Number(state.viewAltitude).toFixed(1));
+}
+
+function setMotionStatus(message) {
+  elements.motionStatus.textContent = message;
+}
+
+function setViewDirection(azimuth, altitude) {
+  state.viewAzimuth = normalizeDegrees(azimuth);
+  state.viewAltitude = clamp(altitude, Number(elements.altitude.min), Number(elements.altitude.max));
+  syncViewInputs();
+  render();
+}
+
+function getMotionHeading(event) {
+  if (typeof event.webkitCompassHeading === "number") {
+    return normalizeDegrees(event.webkitCompassHeading);
+  }
+
+  if (typeof event.alpha === "number") {
+    return normalizeDegrees(360 - event.alpha);
+  }
+
+  return null;
+}
+
+function getMotionPitch(event) {
+  if (typeof event.beta === "number") {
+    return clamp(event.beta, -90, 90);
+  }
+
+  return null;
+}
+
+function getOrientationSample(event) {
+  const heading = getMotionHeading(event);
+  const pitch = getMotionPitch(event);
+
+  if (heading === null || pitch === null) {
+    return null;
+  }
+
+  return { heading, pitch };
+}
+
+function isMotionControlSupported() {
+  return typeof window !== "undefined" && "DeviceOrientationEvent" in window;
+}
+
+function updateControlModeUi() {
+  const isMotion = state.controlMode === "motion";
+  elements.controlModeLabel.textContent = isMotion ? "Bewegung" : "Manuell";
+  elements.useManualControl.classList.toggle("is-active", !isMotion);
+  elements.enableMotionControl.classList.toggle("is-active", isMotion);
+  elements.useManualControl.setAttribute("aria-pressed", String(!isMotion));
+  elements.enableMotionControl.setAttribute("aria-pressed", String(isMotion));
+  elements.azimuth.disabled = isMotion;
+  elements.altitude.disabled = isMotion;
+  elements.calibrateMotion.disabled = !state.motionActive || !state.motionLastOrientation;
+
+  if (!isMotion) {
+    setMotionStatus("Regler steuern die Blickrichtung.");
+  }
+}
+
+function calibrateMotionControl() {
+  if (!state.motionLastOrientation) {
+    setMotionStatus("Noch keine Bewegungsdaten empfangen.");
+    return;
+  }
+
+  state.motionCalibration = {
+    heading: state.motionLastOrientation.heading,
+    pitch: state.motionLastOrientation.pitch,
+    viewAzimuth: state.viewAzimuth,
+    viewAltitude: state.viewAltitude,
+  };
+  state.motionTargetAzimuth = state.viewAzimuth;
+  state.motionTargetAltitude = state.viewAltitude;
+  state.motionCalibrated = true;
+  setMotionStatus("Nullpunkt gesetzt. iPhone oder iPad sanft bewegen.");
+  updateControlModeUi();
+}
+
+function applyMotionSample(sample) {
+  state.motionLastOrientation = sample;
+  elements.calibrateMotion.disabled = !state.motionActive;
+
+  if (!state.motionCalibrated || !state.motionCalibration) {
+    setMotionStatus("Bewegung aktiv. Nullpunkt setzen.");
+    return;
+  }
+
+  const headingDelta = shortestAngleDelta(state.motionCalibration.heading, sample.heading);
+  const pitchDelta = sample.pitch - state.motionCalibration.pitch;
+  state.motionTargetAzimuth = normalizeDegrees(state.motionCalibration.viewAzimuth + headingDelta * 0.9);
+  state.motionTargetAltitude = clamp(state.motionCalibration.viewAltitude + pitchDelta * 0.7, Number(elements.altitude.min), Number(elements.altitude.max));
+
+  if (!state.motionAnimationFrame) {
+    state.motionAnimationFrame = requestAnimationFrame(tickMotionView);
+  }
+}
+
+function handleDeviceOrientation(event) {
+  if (state.controlMode !== "motion") {
+    return;
+  }
+
+  const sample = getOrientationSample(event);
+
+  if (!sample) {
+    setMotionStatus("Bewegungsdaten unvollstaendig.");
+    return;
+  }
+
+  applyMotionSample(sample);
+}
+
+function tickMotionView() {
+  state.motionAnimationFrame = null;
+
+  if (state.controlMode !== "motion" || !state.motionCalibrated) {
+    return;
+  }
+
+  const azimuthDelta = shortestAngleDelta(state.viewAzimuth, state.motionTargetAzimuth);
+  const altitudeDelta = state.motionTargetAltitude - state.viewAltitude;
+  setViewDirection(state.viewAzimuth + azimuthDelta * 0.18, state.viewAltitude + altitudeDelta * 0.18);
+
+  if (Math.abs(azimuthDelta) > 0.05 || Math.abs(altitudeDelta) > 0.05) {
+    state.motionAnimationFrame = requestAnimationFrame(tickMotionView);
+  }
+}
+
+function switchToManualControl() {
+  state.controlMode = "manual";
+  updateControlModeUi();
+}
+
+async function requestMotionPermissionIfNeeded() {
+  const orientationEvent = window.DeviceOrientationEvent;
+
+  if (orientationEvent && typeof orientationEvent.requestPermission === "function") {
+    return orientationEvent.requestPermission();
+  }
+
+  return "granted";
+}
+
+async function enableMotionControl() {
+  if (!isSecureLocationContext()) {
+    setMotionStatus("Bewegung braucht HTTPS oder localhost.");
+    return;
+  }
+
+  if (!isMotionControlSupported()) {
+    setMotionStatus("Dieses Geraet liefert keine Bewegungsdaten.");
+    return;
+  }
+
+  elements.enableMotionControl.disabled = true;
+  setMotionStatus("Bewegungszugriff wird angefragt...");
+
+  try {
+    const permission = await requestMotionPermissionIfNeeded();
+
+    if (permission !== "granted") {
+      setMotionStatus("Bewegungszugriff wurde nicht erlaubt.");
+      elements.enableMotionControl.disabled = false;
+      return;
+    }
+
+    if (!state.motionActive) {
+      window.addEventListener("deviceorientation", handleDeviceOrientation, true);
+    }
+
+    state.motionAvailable = true;
+    state.motionActive = true;
+    state.controlMode = "motion";
+    setMotionStatus("Bewegung aktiv. Nullpunkt setzen.");
+    updateControlModeUi();
+  } catch (error) {
+    setMotionStatus("Bewegungssteuerung konnte nicht gestartet werden.");
+  } finally {
+    elements.enableMotionControl.disabled = false;
+  }
 }
 
 function projectAltitudeToY(altitude, topAltitude, bottomAltitude, topY, bottomY) {
@@ -1019,6 +1223,9 @@ elements.toggleLiveTime.addEventListener("click", () => {
 elements.useCurrentLocation.addEventListener("click", useCurrentLocation);
 elements.toggleSkyLabels.addEventListener("click", toggleSkyLabels);
 elements.toggleAlmanac.addEventListener("click", toggleAlmanac);
+elements.useManualControl.addEventListener("click", switchToManualControl);
+elements.enableMotionControl.addEventListener("click", enableMotionControl);
+elements.calibrateMotion.addEventListener("click", calibrateMotionControl);
 elements.saveMeasurement.addEventListener("click", saveMeasurement);
 elements.clearLog.addEventListener("click", () => {
   state.measurements = [];
@@ -1026,6 +1233,8 @@ elements.clearLog.addEventListener("click", () => {
 });
 
 setUtcTime(new Date());
+syncViewInputs();
+updateControlModeUi();
 refreshAlmanac();
 renderMeasurements();
 setInterval(tickLiveAlmanac, 1000);

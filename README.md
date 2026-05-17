@@ -1,8 +1,8 @@
 # Handsextant MVP
 
-Version 0.44
+Version 0.5
 
-Eine mobile WebApp, die einen Sextanten als Messinstrument simuliert. Die App berechnet keine Position und nutzt im ersten MVP keine Handy-Sensoren.
+Eine mobile WebApp, die einen Sextanten als Messinstrument simuliert. Die App berechnet keine Position, kann die Blickrichtung aber auf iPhone und iPad optional ueber die Orientierungssensoren steuern.
 
 ## MVP 1
 
@@ -44,6 +44,16 @@ Der Almanach ist fuer den Simulator gedacht und ersetzt keinen amtlichen Nautica
 - Planetenpositionen geozentrisch korrekt aus heliocentrischen Bahnelementen ableiten
 - Sonnen- und Mondscheibe in der Sextantenansicht passend zu Unterrand/Oberrand skalieren
 
+## Version 0.5
+
+- Layouts fuer Browser/Desktop, iPhone und iPad etablieren
+- grosse Browserfenster nutzen die verfuegbare Breite mit zweispaltiger Bedienung
+- iPhone-Ansicht bleibt kompakt und touchfreundlich
+- iPad-Ansicht kombiniert grosses Instrument mit seitlicher Bedienung
+- Blicksteuerung zwischen Reglern und Bewegungssteuerung umschalten
+- Bewegungssteuerung mit iOS-Berechtigungsabfrage, Nullpunkt und geglaetteter Anzeige
+- Regler bleiben als Fallback erhalten, wenn Sensoren fehlen oder nicht erlaubt werden
+
 ## GitHub Pages
 
 Die App besteht nur aus statischen Dateien:
@@ -53,5 +63,7 @@ Die App besteht nur aus statischen Dateien:
 - `app.js`
 
 Hinweis: Die Standortuebernahme per Browser funktioniert auf iPadOS nur in einem sicheren Kontext, also zum Beispiel ueber GitHub Pages mit HTTPS. Wenn auf GitHub Pages trotzdem keine Nachfrage erscheint, ist Standortzugriff meist global oder fuer Safari-Websites deaktiviert. Pruefe auf dem iPad die Ortungsdienste und die Safari-Website-Einstellung fuer Standort.
+
+Die Bewegungssteuerung braucht ebenfalls einen sicheren Kontext. Auf iPhone und iPad muss sie nach einem Fingertipp explizit erlaubt und danach mit dem Nullpunkt kalibriert werden.
 
 Damit kann sie direkt aus einem GitHub-Repository per GitHub Pages veröffentlicht werden. Als Pages-Quelle reicht der Branch mit diesen Dateien im Root-Verzeichnis.

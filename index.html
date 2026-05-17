@@ -11,7 +11,7 @@
       <section class="instrument" aria-label="Sextanten-Simulator">
         <header class="topbar">
           <div>
-            <p class="eyebrow">Version 0.44</p>
+            <p class="eyebrow">Version 0.5</p>
             <h1>Sextant Simulation</h1>
           </div>
         </header>
@@ -57,6 +57,19 @@
       </section>
 
       <section class="controls" aria-label="Bedienung">
+        <div class="control-mode" aria-label="Blicksteuerung">
+          <div>
+            <p class="eyebrow">Blicksteuerung</p>
+            <strong id="controlModeLabel">Manuell</strong>
+            <span id="motionStatus">Regler steuern die Blickrichtung.</span>
+          </div>
+          <div class="mode-actions">
+            <button id="useManualControl" class="is-active" type="button" aria-pressed="true">Regler</button>
+            <button id="enableMotionControl" type="button" aria-pressed="false">Bewegung</button>
+            <button id="calibrateMotion" type="button" disabled>Nullpunkt</button>
+          </div>
+        </div>
+
         <div class="control-group">
           <label for="azimuth">Blick horizontal</label>
           <input id="azimuth" type="range" min="0" max="359" value="92">
