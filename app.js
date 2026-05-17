@@ -1002,6 +1002,10 @@ function getBodyOptionGroupLabel(body) {
   return body.kind === "star" ? "Fixsterne" : "Sonne, Mond, Planeten";
 }
 
+function getBodyOptionText(body) {
+  return `${body.name} / Az ${Math.round(body.azimuth)} deg / Alt ${Math.round(body.altitude)} deg`;
+}
+
 function calculateBodies() {
   const { latitude, longitude } = getObserverPosition();
   const date = getAlmanacDate();
@@ -1054,6 +1058,27 @@ function syncTargetFromSelectedBody() {
 }
 
 function renderBodyOptions(previousValue) {
+  const currentOptions = Array.from(elements.bodySelect.options);
+  const canUpdateExistingOptions =
+    currentOptions.length === state.bodies.length &&
+    state.bodies.every((body, index) => currentOptions[index]?.value === body.id);
+
+  if (canUpdateExistingOptions) {
+    if (document.activeElement === elements.bodySelect) {
+      return;
+    }
+
+    state.bodies.forEach((body, index) => {
+      currentOptions[index].textContent = getBodyOptionText(body);
+    });
+
+    if (previousValue && state.bodies.some((body) => body.id === previousValue)) {
+      elements.bodySelect.value = previousValue;
+    }
+
+    return;
+  }
+
   elements.bodySelect.innerHTML = "";
   const optionGroups = new Map();
 
@@ -1070,7 +1095,7 @@ function renderBodyOptions(previousValue) {
 
     const option = document.createElement("option");
     option.value = body.id;
-    option.textContent = `${body.name} / Az ${Math.round(body.azimuth)} deg / Alt ${Math.round(body.altitude)} deg`;
+    option.textContent = getBodyOptionText(body);
     group.append(option);
   });
 
@@ -1467,6 +1492,9 @@ function toggleSkyLabels() {
 elements.bodySelect.addEventListener("change", () => {
   syncTargetFromSelectedBody();
   render();
+});
+elements.bodySelect.addEventListener("blur", () => {
+  renderBodyOptions(elements.bodySelect.value);
 });
 
 elements.toggleLiveTime.addEventListener("click", () => {
