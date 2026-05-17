@@ -26,6 +26,10 @@ const LIMB_OFFSETS = {
   sun: 16 / 60,
   moon: 15 / 60,
 };
+const MOTION_CONTROL = {
+  horizontalSensitivity: 0.9,
+  verticalSensitivity: 1.6,
+};
 
 const state = {
   targetAzimuth: 126,
@@ -371,8 +375,12 @@ function applyMotionSample(sample) {
 
   const headingDelta = shortestAngleDelta(state.motionCalibration.heading, sample.heading);
   const pitchDelta = sample.pitch - state.motionCalibration.pitch;
-  state.motionTargetAzimuth = normalizeDegrees(state.motionCalibration.viewAzimuth + headingDelta * 0.9);
-  state.motionTargetAltitude = clamp(state.motionCalibration.viewAltitude + pitchDelta * 0.7, Number(elements.altitude.min), Number(elements.altitude.max));
+  state.motionTargetAzimuth = normalizeDegrees(state.motionCalibration.viewAzimuth + headingDelta * MOTION_CONTROL.horizontalSensitivity);
+  state.motionTargetAltitude = clamp(
+    state.motionCalibration.viewAltitude + pitchDelta * MOTION_CONTROL.verticalSensitivity,
+    Number(elements.altitude.min),
+    Number(elements.altitude.max),
+  );
 
   if (!state.motionAnimationFrame) {
     state.motionAnimationFrame = requestAnimationFrame(tickMotionView);
