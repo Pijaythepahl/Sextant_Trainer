@@ -343,7 +343,7 @@ function getVerticalMotionAxis(sample) {
     return {
       name: "pitch",
       reference: sample.pitch,
-      sign: sample.pitch >= 0 ? -1 : 1,
+      sign: 1,
     };
   }
 
@@ -351,7 +351,7 @@ function getVerticalMotionAxis(sample) {
     return {
       name: "roll",
       reference: sample.roll,
-      sign: sample.roll >= 0 ? -1 : 1,
+      sign: 1,
     };
   }
 
