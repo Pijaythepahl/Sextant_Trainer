@@ -448,7 +448,7 @@ h2 {
 }
 
 .instrument-adjusters {
-  display: grid;
+  display: none;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
   padding: 14px;
@@ -504,6 +504,9 @@ h2 {
 
 .touch-track {
   position: relative;
+  display: grid;
+  align-items: center;
+  justify-items: center;
   min-height: 132px;
   border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 8px;
@@ -512,6 +515,27 @@ h2 {
     linear-gradient(to top, rgba(255, 255, 255, 0.08) 1px, transparent 1px),
     #0c1416;
   background-size: 100% 25%;
+}
+
+.touch-track::before,
+.touch-track::after {
+  position: absolute;
+  z-index: 2;
+  color: rgba(244, 241, 232, 0.58);
+  font-size: 1.6rem;
+  font-weight: 700;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.touch-track::before {
+  content: "+";
+  top: 12px;
+}
+
+.touch-track::after {
+  content: "-";
+  bottom: 12px;
 }
 
 .touch-fill {
@@ -540,7 +564,13 @@ h2 {
   background: linear-gradient(to top, rgba(245, 200, 75, 0.34), rgba(116, 199, 211, 0.2));
 }
 
-.is-motion-control .view-control {
+.is-motion-control .instrument-adjusters {
+  display: grid;
+}
+
+.is-motion-control .view-control,
+.is-motion-control .primary-control,
+.is-motion-control .fine-control {
   display: none;
 }
 
@@ -866,7 +896,35 @@ select {
   }
 }
 
-@media (min-width: 760px) {
+@media (min-width: 760px) and (max-width: 1023px) {
+  .app-shell {
+    width: min(100%, 860px);
+    padding: 16px;
+  }
+
+  .sky-frame {
+    height: min(70vh, 680px);
+    min-height: 560px;
+  }
+
+  .scope {
+    width: clamp(230px, 34vw, 320px);
+  }
+
+  .instrument-adjusters {
+    padding: 16px;
+  }
+
+  .touch-adjuster {
+    min-height: 220px;
+  }
+
+  .touch-track {
+    min-height: 154px;
+  }
+}
+
+@media (min-width: 1024px) {
   .app-shell {
     display: grid;
     grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.75fr);
@@ -907,20 +965,6 @@ select {
   .touch-track {
     min-height: 154px;
   }
-}
-
-@media (min-width: 760px) and (max-width: 1023px) {
-  .app-shell {
-    grid-template-columns: minmax(0, 1fr) 330px;
-  }
-
-  .sky-frame {
-    height: min(68vh, 660px);
-    min-height: 500px;
-  }
-}
-
-@media (min-width: 1024px) {
   .app-shell {
     padding: 18px;
   }

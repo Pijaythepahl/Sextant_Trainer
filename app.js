@@ -36,11 +36,15 @@ const TOUCH_CONTROLS = {
     min: 0,
     max: 90,
     step: 0.1,
+    tapStep: 1,
+    unitsPerPixel: 0.16,
   },
   micrometerMinutes: {
     min: -30,
     max: 30,
     step: 0.1,
+    tapStep: 0.5,
+    unitsPerPixel: 0.16,
   },
 };
 
@@ -362,24 +366,24 @@ function setTouchControlValue(controlName, value) {
   }
 }
 
-function getTouchControlValueFromPointer(controlElement, clientY, config) {
-  const rect = controlElement.getBoundingClientRect();
-  const ratio = clamp((rect.bottom - clientY) / rect.height, 0, 1);
-  return config.min + ratio * (config.max - config.min);
-}
-
 function setupTouchControl(controlElement, controlName) {
   const config = TOUCH_CONTROLS[controlName];
+  let dragStartY = 0;
+  let dragStartValue = 0;
+  let dragLastY = 0;
 
   function updateFromPointer(event) {
-    setTouchControlValue(controlName, getTouchControlValueFromPointer(controlElement, event.clientY, config));
+    const deltaPixels = dragStartY - event.clientY;
+    setTouchControlValue(controlName, dragStartValue + deltaPixels * config.unitsPerPixel);
   }
 
   controlElement.addEventListener("pointerdown", (event) => {
     event.preventDefault();
+    dragStartY = event.clientY;
+    dragLastY = event.clientY;
+    dragStartValue = controlName === "indexAngle" ? state.indexAngle : state.micrometerMinutes;
     controlElement.setPointerCapture(event.pointerId);
     controlElement.classList.add("is-dragging");
-    updateFromPointer(event);
   });
 
   controlElement.addEventListener("pointermove", (event) => {
@@ -387,16 +391,25 @@ function setupTouchControl(controlElement, controlName) {
       return;
     }
 
+    dragLastY = event.clientY;
     updateFromPointer(event);
   });
 
   ["pointerup", "pointercancel"].forEach((eventName) => {
     controlElement.addEventListener(eventName, (event) => {
+      const wasTap = Math.abs(dragLastY - dragStartY) < 6;
+
       if (controlElement.hasPointerCapture(event.pointerId)) {
         controlElement.releasePointerCapture(event.pointerId);
       }
 
       controlElement.classList.remove("is-dragging");
+
+      if (eventName === "pointerup" && wasTap) {
+        const rect = controlElement.getBoundingClientRect();
+        const direction = event.clientY < rect.top + rect.height / 2 ? 1 : -1;
+        setTouchControlValue(controlName, dragStartValue + direction * config.tapStep);
+      }
     });
   });
 

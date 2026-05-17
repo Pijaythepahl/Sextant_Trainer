@@ -1,6 +1,6 @@
 # Handsextant MVP
 
-Version 0.51
+Version 0.52
 
 Eine mobile WebApp, die einen Sextanten als Messinstrument simuliert. Die App berechnet keine Position, kann die Blickrichtung aber auf iPhone und iPad optional ueber die Orientierungssensoren steuern.
 
@@ -60,6 +60,13 @@ Der Almanach ist fuer den Simulator gedacht und ersetzt keinen amtlichen Nautica
 - Alhidade und Mikrometer mit Touch, Maus und Tastatur stufenlos bedienbar machen
 - Blickregler im Bewegungsmodus ausblenden
 - bestehende horizontale Regler fuer Alhidade und Mikrometer als Fallback erhalten
+
+## Version 0.52
+
+- grosse Alhidade- und Mikrometer-Regler im Bewegungsmodus als relative Plus/Minus-Flaechen bedienen
+- Neuansetzen mit dem Finger springt nicht mehr auf den beruehrten Wert
+- alte Blick-, Alhidade- und Mikrometer-Slider im Bewegungsmodus ausblenden
+- iPad-Layout auf grosse Ansicht oben und Bedienung darunter umstellen
 
 ## GitHub Pages
 
