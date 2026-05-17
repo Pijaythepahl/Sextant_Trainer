@@ -1,6 +1,6 @@
 # Handsextant MVP
 
-Version 0.43
+Version 0.44
 
 Eine mobile WebApp, die einen Sextanten als Messinstrument simuliert. Die App berechnet keine Position und nutzt im ersten MVP keine Handy-Sensoren.
 
@@ -42,6 +42,7 @@ Der Almanach ist fuer den Simulator gedacht und ersetzt keinen amtlichen Nautica
 - manuelle Standort-Eingabe bleibt erhalten
 - 57 klassische Navigationssterne plus Polaris im Almanach fuehren
 - Planetenpositionen geozentrisch korrekt aus heliocentrischen Bahnelementen ableiten
+- Sonnen- und Mondscheibe in der Sextantenansicht passend zu Unterrand/Oberrand skalieren
 
 ## GitHub Pages
 

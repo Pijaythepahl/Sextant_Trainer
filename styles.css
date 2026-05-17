@@ -369,15 +369,15 @@ h2 {
 }
 
 .scope-object.is-sun {
-  width: 24px;
-  margin: -12px 0 0 -12px;
+  width: 42.666%;
+  margin: -21.333% 0 0 -21.333%;
   background: var(--accent);
   box-shadow: 0 0 14px rgba(245, 200, 75, 0.78);
 }
 
 .scope-object.is-moon {
-  width: 20px;
-  margin: -10px 0 0 -10px;
+  width: 40%;
+  margin: -20% 0 0 -20%;
   background: #d8d2bf;
   box-shadow: 0 0 12px rgba(216, 210, 191, 0.58);
 }
