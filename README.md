@@ -1,6 +1,6 @@
 # Handsextant MVP
 
-Version 0.52
+Version 0.53
 
 Eine mobile WebApp, die einen Sextanten als Messinstrument simuliert. Die App berechnet keine Position, kann die Blickrichtung aber auf iPhone und iPad optional ueber die Orientierungssensoren steuern.
 
@@ -67,6 +67,15 @@ Der Almanach ist fuer den Simulator gedacht und ersetzt keinen amtlichen Nautica
 - Neuansetzen mit dem Finger springt nicht mehr auf den beruehrten Wert
 - alte Blick-, Alhidade- und Mikrometer-Slider im Bewegungsmodus ausblenden
 - iPad-Layout auf grosse Ansicht oben und Bedienung darunter umstellen
+
+## Version 0.53
+
+- Messung speichern im Bewegungsmodus direkt unter den grossen Reglern anbieten
+- bestehenden Speichermechanismus fuer beide Speicherbuttons verwenden
+- Gestirnliste stabil nach Sonne, Mond, Planeten und Sternen gruppieren
+- Gestirne innerhalb der Gruppen alphabetisch sortieren
+- echter Horizont in der Spiegelhaelfte als Referenz sichtbar halten
+- verschobenen Spiegelhorizont fuer Indexfehler transparent darstellen
 
 ## GitHub Pages
 

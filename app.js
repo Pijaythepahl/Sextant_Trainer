@@ -56,10 +56,10 @@ const state = {
   targetKind: "sun",
   targetComputedAt: "",
   viewAzimuth: 92,
-  viewAltitude: 18,
+  viewAltitude: 0,
   indexAngle: 0,
   micrometerMinutes: 0,
-  indexErrorMinutes: 0,
+  indexErrorMinutes: 2,
   observerHeightMeters: 2,
   showSkyLabels: false,
   liveTimeEnabled: true,
@@ -191,6 +191,7 @@ const elements = {
   directBelowHorizon: document.querySelector("#directBelowHorizon"),
   mirrorBelowHorizon: document.querySelector("#mirrorBelowHorizon"),
   directHorizon: document.querySelector("#directHorizon"),
+  mirrorReferenceHorizon: document.querySelector("#mirrorReferenceHorizon"),
   mirrorHorizon: document.querySelector("#mirrorHorizon"),
   azimuth: document.querySelector("#azimuth"),
   altitude: document.querySelector("#altitude"),
@@ -230,6 +231,7 @@ const elements = {
   sextantReading: document.querySelector("#targetReadout"),
   viewReadout: document.querySelector("#viewReadout"),
   targetReadout: document.querySelector("#targetReadout"),
+  saveMeasurementQuick: document.querySelector("#saveMeasurementQuick"),
   saveMeasurement: document.querySelector("#saveMeasurement"),
   clearLog: document.querySelector("#clearLog"),
   measurementList: document.querySelector("#measurementList"),
@@ -985,6 +987,21 @@ function makeBody(id, name, kind, equatorial, latitude, longitude, jd, limbOffse
   };
 }
 
+function getBodySortGroup(body) {
+  const groups = {
+    sun: 0,
+    moon: 1,
+    planet: 2,
+    star: 3,
+  };
+
+  return groups[body.kind] ?? 9;
+}
+
+function getBodyOptionGroupLabel(body) {
+  return body.kind === "star" ? "Fixsterne" : "Sonne, Mond, Planeten";
+}
+
 function calculateBodies() {
   const { latitude, longitude } = getObserverPosition();
   const date = getAlmanacDate();
@@ -1007,11 +1024,13 @@ function calculateBodies() {
   });
 
   state.bodies = bodies.sort((a, b) => {
-    if (b.altitude !== a.altitude) {
-      return b.altitude - a.altitude;
+    const groupDelta = getBodySortGroup(a) - getBodySortGroup(b);
+
+    if (groupDelta !== 0) {
+      return groupDelta;
     }
 
-    return a.name.localeCompare(b.name);
+    return a.name.localeCompare(b.name, "de", { sensitivity: "base" });
   });
   state.targetComputedAt = date.toISOString();
 }
@@ -1036,12 +1055,23 @@ function syncTargetFromSelectedBody() {
 
 function renderBodyOptions(previousValue) {
   elements.bodySelect.innerHTML = "";
+  const optionGroups = new Map();
 
   state.bodies.forEach((body) => {
+    const groupLabel = getBodyOptionGroupLabel(body);
+    let group = optionGroups.get(groupLabel);
+
+    if (!group) {
+      group = document.createElement("optgroup");
+      group.label = groupLabel;
+      optionGroups.set(groupLabel, group);
+      elements.bodySelect.append(group);
+    }
+
     const option = document.createElement("option");
     option.value = body.id;
     option.textContent = `${body.name} / Az ${Math.round(body.azimuth)} deg / Alt ${Math.round(body.altitude)} deg`;
-    elements.bodySelect.append(option);
+    group.append(option);
   });
 
   if (previousValue && state.bodies.some((body) => body.id === previousValue)) {
@@ -1331,10 +1361,9 @@ function renderScopeObjects(sextantAngle) {
 function render() {
   const sextantAngle = getSextantAngle();
   const opticalSextantAngle = getOpticalSextantAngle();
-  const indexErrorAngle = getIndexErrorAngle();
   const visibleHorizonAltitude = -getDipCorrectionDegrees();
   const directScopeHorizonPosition = getScopePosition(state.viewAzimuth, visibleHorizonAltitude);
-  const mirrorScopeHorizonPosition = getScopePosition(state.viewAzimuth, visibleHorizonAltitude - indexErrorAngle);
+  const mirrorScopeHorizonPosition = getScopePosition(state.viewAzimuth, visibleHorizonAltitude - opticalSextantAngle);
   const worldHorizonPosition = getWorldHorizonPosition(state.viewAzimuth, visibleHorizonAltitude);
 
   renderWorldObjects();
@@ -1344,6 +1373,7 @@ function render() {
   renderScopeOverlay();
   renderScopeBackground(directScopeHorizonPosition, mirrorScopeHorizonPosition);
   renderHorizon(elements.directHorizon, directScopeHorizonPosition);
+  renderHorizon(elements.mirrorReferenceHorizon, directScopeHorizonPosition);
   renderHorizon(elements.mirrorHorizon, mirrorScopeHorizonPosition);
   renderBelowHorizon(elements.directBelowHorizon, directScopeHorizonPosition);
   renderBelowHorizon(elements.mirrorBelowHorizon, mirrorScopeHorizonPosition);
@@ -1450,6 +1480,7 @@ elements.enableMotionControl.addEventListener("click", enableMotionControl);
 elements.calibrateMotion.addEventListener("click", calibrateMotionControl);
 setupTouchControl(elements.indexTouchControl, "indexAngle");
 setupTouchControl(elements.micrometerTouchControl, "micrometerMinutes");
+elements.saveMeasurementQuick.addEventListener("click", saveMeasurement);
 elements.saveMeasurement.addEventListener("click", saveMeasurement);
 elements.clearLog.addEventListener("click", () => {
   state.measurements = [];
