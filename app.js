@@ -309,7 +309,15 @@ function getMotionHeading(event) {
 
 function getMotionPitch(event) {
   if (typeof event.beta === "number") {
-    return clamp(event.beta, -90, 90);
+    return event.beta;
+  }
+
+  return null;
+}
+
+function getMotionRoll(event) {
+  if (typeof event.gamma === "number") {
+    return event.gamma;
   }
 
   return null;
@@ -318,12 +326,50 @@ function getMotionPitch(event) {
 function getOrientationSample(event) {
   const heading = getMotionHeading(event);
   const pitch = getMotionPitch(event);
+  const roll = getMotionRoll(event);
 
-  if (pitch === null) {
+  if (pitch === null && roll === null) {
     return null;
   }
 
-  return { heading, pitch };
+  return { heading, pitch, roll };
+}
+
+function getVerticalMotionAxis(sample) {
+  const absolutePitch = Math.abs(sample.pitch || 0);
+  const absoluteRoll = Math.abs(sample.roll || 0);
+
+  if (absolutePitch >= 55) {
+    return {
+      name: "pitch",
+      reference: sample.pitch,
+      sign: sample.pitch >= 0 ? -1 : 1,
+    };
+  }
+
+  if (absoluteRoll >= 55) {
+    return {
+      name: "roll",
+      reference: sample.roll,
+      sign: sample.roll >= 0 ? -1 : 1,
+    };
+  }
+
+  return {
+    name: "pitch",
+    reference: sample.pitch || 0,
+    sign: 1,
+  };
+}
+
+function getVerticalMotionDelta(sample, calibration) {
+  const currentValue = calibration.verticalAxis.name === "roll" ? sample.roll : sample.pitch;
+
+  if (currentValue === null) {
+    return 0;
+  }
+
+  return (currentValue - calibration.verticalAxis.reference) * calibration.verticalAxis.sign;
 }
 
 function isMotionControlSupported() {
@@ -359,7 +405,7 @@ function calibrateMotionControl() {
 
   state.motionCalibration = {
     heading,
-    pitch: state.motionLastOrientation.pitch,
+    verticalAxis: getVerticalMotionAxis(state.motionLastOrientation),
     viewAzimuth,
     viewAltitude: MOTION_CONTROL.neutralAltitude,
   };
@@ -383,10 +429,10 @@ function applyMotionSample(sample) {
     state.motionCalibration.heading === null || sample.heading === null
       ? 0
       : shortestAngleDelta(state.motionCalibration.heading, sample.heading);
-  const pitchDelta = sample.pitch - state.motionCalibration.pitch;
+  const verticalDelta = getVerticalMotionDelta(sample, state.motionCalibration);
   state.motionTargetAzimuth = normalizeDegrees(state.motionCalibration.viewAzimuth + headingDelta * MOTION_CONTROL.horizontalSensitivity);
   state.motionTargetAltitude = clamp(
-    state.motionCalibration.viewAltitude + pitchDelta * MOTION_CONTROL.verticalSensitivity,
+    state.motionCalibration.viewAltitude + verticalDelta * MOTION_CONTROL.verticalSensitivity,
     Number(elements.altitude.min),
     Number(elements.altitude.max),
   );
