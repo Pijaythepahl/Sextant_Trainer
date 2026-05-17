@@ -1,8 +1,18 @@
-# Handsextant MVP
+# Handsextant
 
-Version 0.53
+Version 1.0
 
 Eine mobile WebApp, die einen Sextanten als Messinstrument simuliert. Die App berechnet keine Position, kann die Blickrichtung aber auf iPhone und iPad optional ueber die Orientierungssensoren steuern.
+
+## Version 1.0
+
+- erster stabiler Release-Stand der Sextanten-App
+- mobile WebApp fuer Desktop, iPhone und iPad
+- manuelle und sensorbasierte Blicksteuerung
+- grosse Alhidade- und Mikrometer-Bedienung fuer Touch, Maus und Tastatur
+- vereinfachter Almanach fuer Sonne, Mond, sichtbare Planeten und Navigationssterne
+- Messprotokoll mit Ort, Zeit, Gestirn, Zielhoehe, Zielazimut und Sextantenablesung
+- GitHub-Pages-taugliche statische App ohne Build-Schritt
 
 ## MVP 1
 
